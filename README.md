@@ -140,12 +140,36 @@ supabase/
 
 ## 🚢 배포
 
-### Vercel 배포
+### 🌐 웹에서 보기
 
-1. GitHub 저장소에 프로젝트 푸시
-2. Vercel에서 프로젝트 임포트
-3. 환경 변수 설정 (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
-4. 배포 URL을 Supabase Authentication > URL Configuration에 추가
+이 프로젝트를 Vercel에 배포하여 웹에서 바로 사용할 수 있습니다.
+
+**상세 배포 가이드**: [DEPLOYMENT.md](./DEPLOYMENT.md) 참조
+
+### 빠른 배포 (3분 완성)
+
+1. **Supabase 설정**
+   - Supabase에서 프로젝트 생성
+   - SQL Editor에서 `supabase/schema.sql` 및 `supabase/seed.sql` 실행
+   - API 키 복사
+
+2. **Vercel 배포**
+   - Vercel에서 GitHub 저장소 임포트
+   - 환경 변수 설정:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - 배포 시작
+
+3. **OAuth 설정**
+   - Google Cloud Console에서 OAuth Client 생성
+   - Supabase에 Google OAuth 연동
+   - Redirect URLs 업데이트
+
+자세한 단계별 가이드는 **[DEPLOYMENT.md](./DEPLOYMENT.md)**를 확인하세요.
+
+### Deploy with Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/taekilKim/designerlearningcurve&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
 ## 🤝 기여하기
 
