@@ -6,6 +6,44 @@
 
 ---
 
+## [1.0.1] - 2026-01-14
+
+### 📚 Documentation (문서화)
+
+#### 배포 가이드 추가
+- **DEPLOYMENT.md**: 상세한 웹 배포 가이드 작성
+  - Supabase 프로젝트 설정 단계
+  - Google OAuth 설정 방법
+  - Vercel 배포 프로세스
+  - 커스텀 도메인 설정 가이드
+  - 문제 해결 섹션
+  - 배포 체크리스트
+
+- **README.md** 개선
+  - 배포 섹션 확장
+  - "Deploy with Vercel" 버튼 추가
+  - DEPLOYMENT.md 링크 추가
+
+#### 설정 파일
+- **vercel.json**: Vercel 배포 설정
+  - 빌드 명령 지정
+  - Seoul 리전 설정
+- **.env.example**: 환경 변수 템플릿
+  - Supabase URL 및 Anon Key 예제
+- **.gitignore** 수정: .env.example 허용
+
+#### PR 템플릿
+- **.github/PULL_REQUEST_TEMPLATE.md**: 표준화된 PR 템플릿
+
+### 🎯 Impact
+
+이 패치를 통해 사용자는:
+- 3분 만에 Vercel에 프로젝트를 배포할 수 있습니다
+- 단계별 가이드를 따라 쉽게 설정할 수 있습니다
+- 환경 변수 템플릿으로 빠르게 시작할 수 있습니다
+
+---
+
 ## [1.0.0] - 2026-01-10
 
 ### 🎉 Initial Release - MVP
