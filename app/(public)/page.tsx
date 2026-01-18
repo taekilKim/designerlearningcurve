@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ArticleCard } from "@/components/home/article-card";
 
 export const dynamic = 'force-dynamic';
 
@@ -39,43 +37,7 @@ export default async function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles?.map((article: Article) => (
-          <Card
-            key={article.id}
-            className="group cursor-pointer transition-all hover:shadow-lg overflow-hidden"
-            onClick={() => window.open(article.url, "_blank")}
-          >
-            {article.thumbnail_url && (
-              <div className="relative w-full h-48 overflow-hidden bg-muted">
-                <Image
-                  src={article.thumbnail_url}
-                  alt={article.title}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-            <CardHeader>
-              <CardTitle className="flex items-start justify-between gap-2">
-                <span className="line-clamp-2">{article.title}</span>
-                <ExternalLink className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-              </CardTitle>
-              {article.description && (
-                <CardDescription className="line-clamp-2">
-                  {article.description}
-                </CardDescription>
-              )}
-            </CardHeader>
-            {article.author && (
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  by {article.author}
-                </p>
-              </CardContent>
-            )}
-          </Card>
+          <ArticleCard key={article.id} article={article} />
         ))}
       </div>
 
