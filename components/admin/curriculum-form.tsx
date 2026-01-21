@@ -64,7 +64,7 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
             : "커리큘럼이 수정되었습니다."
         );
 
-        if (mode === "create" && result.data) {
+        if (mode === "create" && "data" in result && result.data) {
           // Redirect to edit page to add articles
           router.push(`/admin/curriculums/${result.data.id}/edit`);
         } else {
