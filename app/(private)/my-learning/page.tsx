@@ -28,13 +28,13 @@ export default async function MyLearningPage() {
           completed_items(
             id,
             completed_at
-          ),
-          learning_notes(
-            id,
-            content,
-            updated_at
           )
         )
+      ),
+      learning_notes(
+        id,
+        content,
+        updated_at
       )
     `)
     .eq("user_id", user.id)

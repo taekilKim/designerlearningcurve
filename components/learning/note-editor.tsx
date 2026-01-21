@@ -9,13 +9,11 @@ import { FileEdit, Check } from "lucide-react";
 
 interface NoteEditorProps {
   enrollmentId: string;
-  curriculumItemId: string;
   initialContent: string;
 }
 
 export function NoteEditor({
   enrollmentId,
-  curriculumItemId,
   initialContent,
 }: NoteEditorProps) {
   const [content, setContent] = useState(initialContent);
@@ -32,7 +30,6 @@ export function NoteEditor({
       try {
         const result = await saveNoteAction(
           enrollmentId,
-          curriculumItemId,
           content
         );
 
@@ -49,7 +46,7 @@ export function NoteEditor({
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [content, enrollmentId, curriculumItemId, initialContent]);
+  }, [content, enrollmentId, initialContent]);
 
   const getTimeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -83,7 +80,7 @@ export function NoteEditor({
       <RichTextEditor
         content={content}
         onChange={setContent}
-        placeholder="이 아티클에 대한 학습 내용, 생각, 질문 등을 자유롭게 작성하세요..."
+        placeholder="이 커리큘럼에 대한 학습 내용, 생각, 질문 등을 자유롭게 작성하세요..."
       />
       <p className="text-xs text-muted-foreground">
         노트는 자동으로 저장됩니다. 텍스트 포맷팅을 사용할 수 있습니다.

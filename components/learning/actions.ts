@@ -54,7 +54,6 @@ export async function toggleCompletionAction(
 
 export async function saveNoteAction(
   enrollmentId: string,
-  curriculumItemId: string,
   content: string
 ) {
   const supabase = await createClient();
@@ -74,11 +73,10 @@ export async function saveNoteAction(
       .upsert(
         {
           enrollment_id: enrollmentId,
-          curriculum_item_id: curriculumItemId,
           content,
         },
         {
-          onConflict: "enrollment_id,curriculum_item_id",
+          onConflict: "enrollment_id",
         }
       );
 
@@ -96,8 +94,7 @@ export async function saveNoteAction(
 }
 
 export async function deleteNoteAction(
-  enrollmentId: string,
-  curriculumItemId: string
+  enrollmentId: string
 ) {
   const supabase = await createClient();
 
@@ -113,8 +110,7 @@ export async function deleteNoteAction(
     const { error } = await supabase
       .from("learning_notes")
       .delete()
-      .eq("enrollment_id", enrollmentId)
-      .eq("curriculum_item_id", curriculumItemId);
+      .eq("enrollment_id", enrollmentId);
 
     if (error) {
       console.error("Error deleting note:", error);

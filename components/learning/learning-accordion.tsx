@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { ExternalLink, ChevronDown, FileEdit } from "lucide-react";
+import { ExternalLink, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toggleCompletionAction } from "./actions";
 import { toast } from "sonner";
@@ -112,14 +112,22 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-3 pt-4">
+            {/* Curriculum-level note editor */}
+            <div className="mb-6 pt-4">
+              <NoteEditor
+                enrollmentId={enrollment.id}
+                initialContent={enrollment.learning_notes?.[0]?.content || ""}
+              />
+            </div>
+
+            {/* Articles list */}
+            <div className="space-y-3">
               {enrollment.curriculum?.curriculum_items?.map(
                 (item: any, index: number) => {
                   const isCompleted =
                     item.completed_items && item.completed_items.length > 0;
                   const itemKey = `${enrollment.id}-${item.id}`;
                   const isExpanded = expandedItem === itemKey;
-                  const note = item.learning_notes?.[0];
 
                   return (
                     <div
@@ -179,66 +187,47 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                               💡 {item.curator_note}
                             </div>
                           )}
-                          {!isExpanded && (
-                            <div className="mt-3 flex items-center gap-2 text-sm text-primary">
-                              <FileEdit className="h-4 w-4" />
-                              <span>학습 노트 작성하기</span>
-                              <ChevronDown className="h-4 w-4 ml-auto" />
-                            </div>
-                          )}
                         </div>
                       </div>
 
-                      {/* Expanded content - article info + note editor */}
+                      {/* Expanded content - article info only */}
                       {isExpanded && (
-                        <div className="p-4 space-y-6">
-                          {/* Article info */}
-                          <div className="space-y-4">
-                            <div>
-                              <h5 className="font-semibold mb-2 flex items-center gap-2">
-                                <ExternalLink className="h-4 w-4" />
-                                아티클 정보
-                              </h5>
-                              {item.article?.description && (
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  {item.article.description}
-                                </p>
-                              )}
-                              {item.article?.author && (
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  작성자: {item.article.author}
-                                </p>
-                              )}
-                              <a
-                                href={item.article?.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                아티클 읽으러 가기
-                              </a>
-                            </div>
-
-                            {item.curator_note && (
-                              <div>
-                                <h5 className="font-semibold mb-2">💡 큐레이터 노트</h5>
-                                <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
-                                  {item.curator_note}
-                                </div>
-                              </div>
+                        <div className="p-4 space-y-4">
+                          <div>
+                            <h5 className="font-semibold mb-2 flex items-center gap-2">
+                              <ExternalLink className="h-4 w-4" />
+                              아티클 정보
+                            </h5>
+                            {item.article?.description && (
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {item.article.description}
+                              </p>
                             )}
+                            {item.article?.author && (
+                              <p className="text-sm text-muted-foreground mb-3">
+                                작성자: {item.article.author}
+                              </p>
+                            )}
+                            <a
+                              href={item.article?.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              아티클 읽으러 가기
+                            </a>
                           </div>
 
-                          {/* Note editor - full width on mobile */}
-                          <div className="border-t pt-6">
-                            <NoteEditor
-                              enrollmentId={enrollment.id}
-                              curriculumItemId={item.id}
-                              initialContent={note?.content || ""}
-                            />
-                          </div>
+                          {item.curator_note && (
+                            <div>
+                              <h5 className="font-semibold mb-2">💡 큐레이터 노트</h5>
+                              <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
+                                {item.curator_note}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Close button for mobile */}
                           <button
