@@ -66,7 +66,7 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
 
         if (mode === "create" && "data" in result && result.data) {
           // Redirect to edit page to add articles
-          router.push(`/admin/curriculums/${result.data.id}/edit`);
+          router.push(`/admin/curriculums/${(result.data as { id: string }).id}/edit`);
         } else {
           router.push("/admin/curriculums");
         }
