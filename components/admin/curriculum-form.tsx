@@ -117,7 +117,12 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
             <Label htmlFor="difficulty">
               난이도 <span className="text-destructive">*</span>
             </Label>
-            <Select value={difficulty} onValueChange={setDifficulty}>
+            <Select
+              value={difficulty}
+              onValueChange={(value) =>
+                setDifficulty(value as "beginner" | "intermediate" | "advanced")
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="난이도를 선택하세요" />
               </SelectTrigger>
