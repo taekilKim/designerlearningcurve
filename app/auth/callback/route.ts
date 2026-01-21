@@ -8,12 +8,24 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/my-learning'
 
+  console.log('[Auth Callback] Request URL:', request.url)
+  console.log('[Auth Callback] Code:', code)
+  console.log('[Auth Callback] Origin:', origin)
+  console.log('[Auth Callback] Next:', next)
+
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    console.log('[Auth Callback] Exchange result:', { data: !!data, error })
+
     if (!error) {
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
+
+      console.log('[Auth Callback] Forwarded host:', forwardedHost)
+      console.log('[Auth Callback] Is local:', isLocalEnv)
+
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${next}`)
       } else if (forwardedHost) {
@@ -21,9 +33,14 @@ export async function GET(request: Request) {
       } else {
         return NextResponse.redirect(`${origin}${next}`)
       }
+    } else {
+      console.error('[Auth Callback] Exchange error:', error)
     }
+  } else {
+    console.error('[Auth Callback] No code provided')
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+  console.log('[Auth Callback] Redirecting to error page')
+  return NextResponse.redirect(`${origin}/`)
 }
