@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { GNB } from "@/components/shared/gnb";
 import { BottomNav } from "@/components/shared/bottom-nav";
@@ -7,6 +7,14 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "Designer Learning Curve",
   description: "아티클을 순서 있는 커리큘럼으로 제공하여 학습 완주를 돕는 웹 서비스",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  minimumScale: 1.0,
+  userScalable: false,
 };
 
 export default function RootLayout({

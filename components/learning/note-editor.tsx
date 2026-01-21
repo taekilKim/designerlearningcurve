@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect } from "react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { saveNoteAction } from "./actions";
 import { toast } from "sonner";
@@ -80,14 +80,13 @@ export function NoteEditor({
           ) : null}
         </div>
       </div>
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
+      <RichTextEditor
+        content={content}
+        onChange={setContent}
         placeholder="이 아티클에 대한 학습 내용, 생각, 질문 등을 자유롭게 작성하세요..."
-        className="min-h-[300px] resize-y font-mono text-sm"
       />
       <p className="text-xs text-muted-foreground">
-        노트는 자동으로 저장됩니다.
+        노트는 자동으로 저장됩니다. 텍스트 포맷팅을 사용할 수 있습니다.
       </p>
     </div>
   );
