@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { GNB } from "@/components/shared/gnb";
+import { BottomNav } from "@/components/shared/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
@@ -25,7 +26,8 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <GNB />
-        <main className="min-h-screen">{children}</main>
+        <main className="min-h-screen pb-16 md:pb-0">{children}</main>
+        <BottomNav />
         <Toaster />
       </body>
     </html>

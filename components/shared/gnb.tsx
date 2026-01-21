@@ -76,7 +76,8 @@ export function GNB() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="text-xl font-bold">
-            Designer Learning Curve
+            <span className="hidden md:inline">Designer Learning Curve</span>
+            <span className="md:hidden">DLC</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link
