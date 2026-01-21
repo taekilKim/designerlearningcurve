@@ -51,3 +51,80 @@ export async function toggleCompletionAction(
     return { success: false, error: "Unknown error" };
   }
 }
+
+export async function saveNoteAction(
+  enrollmentId: string,
+  curriculumItemId: string,
+  content: string
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    // Upsert note (insert or update)
+    const { error } = await supabase
+      .from("learning_notes")
+      .upsert(
+        {
+          enrollment_id: enrollmentId,
+          curriculum_item_id: curriculumItemId,
+          content,
+        },
+        {
+          onConflict: "enrollment_id,curriculum_item_id",
+        }
+      );
+
+    if (error) {
+      console.error("Error saving note:", error);
+      return { success: false, error: error.message };
+    }
+
+    // No need to revalidate as we're using optimistic UI
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving note:", error);
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteNoteAction(
+  enrollmentId: string,
+  curriculumItemId: string
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("learning_notes")
+      .delete()
+      .eq("enrollment_id", enrollmentId)
+      .eq("curriculum_item_id", curriculumItemId);
+
+    if (error) {
+      console.error("Error deleting note:", error);
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/my-learning");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting note:", error);
+    return { success: false, error: "Unknown error" };
+  }
+}

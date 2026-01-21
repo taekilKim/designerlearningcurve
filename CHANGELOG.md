@@ -6,6 +6,184 @@
 
 ---
 
+## [1.1.0] - 2026-01-21
+
+### 🎉 Major Features (주요 기능)
+
+#### 관리자 패널 추가
+- **관리자 인증 시스템**
+  - 데이터베이스 기반 관리자 권한 (`profiles.is_admin`)
+  - 미들웨어를 통한 `/admin` 라우트 보호
+  - 관리자 유틸리티 함수 (`lib/admin.ts`)
+  - GNB에 관리자 메뉴 표시
+
+- **아티클 관리 (`/admin/articles`)**
+  - 아티클 목록 보기
+  - 새 아티클 추가 폼
+  - 아티클 수정 기능
+  - 아티클 삭제 (확인 다이얼로그)
+  - 외부 링크로 미리보기
+
+- **커리큘럼 관리 (`/admin/curriculums`)**
+  - 커리큘럼 목록 보기
+  - 새 커리큘럼 생성 폼
+  - 커리큘럼 정보 수정
+  - 커리큘럼에 아티클 추가/제거
+  - 큐레이터 노트 작성/수정
+  - 커리큘럼 삭제 (확인 다이얼로그)
+  - 아티클 순서 관리 (sequence)
+
+- **관리자 대시보드 (`/admin`)**
+  - 통계 카드 (아티클/커리큘럼/사용자 수)
+  - 빠른 시작 가이드
+
+#### 학습노트 기능 추가
+- **학습노트 작성 UI**
+  - 각 아티클마다 개인 노트 작성 가능
+  - Textarea 기반 텍스트 에디터
+  - 자동 저장 (1초 디바운스)
+  - 실시간 저장 상태 표시 ("방금 전 저장됨")
+  - 노트 작성 영역 확장/축소
+
+- **내 학습 페이지 리디자인 (`/my-learning`)**
+  - 최대 너비 확장 (max-w-5xl → max-w-7xl)
+  - 2단 레이아웃 (아티클 정보 + 노트 에디터)
+  - 아티클 클릭 시 상세 정보 및 노트 표시
+  - 큐레이터 노트와 학습노트 구분 표시
+  - 개선된 UX (클릭으로 확장/축소)
+
+### 🗄️ Database (데이터베이스)
+
+#### 새로운 테이블
+- **`learning_notes`**: 사용자별 학습노트 저장
+  - enrollment_id, curriculum_item_id 복합 유니크 키
+  - content (TEXT): 노트 내용
+  - created_at, updated_at: 타임스탬프
+
+#### 스키마 변경
+- **`profiles` 테이블**
+  - `is_admin` (BOOLEAN) 컬럼 추가
+  - 기본값: false
+
+- **RLS 정책 추가**
+  - 관리자 전용 정책: articles, curriculums, curriculum_items INSERT/UPDATE/DELETE
+  - 학습노트 정책: 본인 enrollment에 대한 CRUD 권한
+
+- **마이그레이션 파일**
+  - `supabase/migrations/20260121_add_admin_and_notes.sql`
+
+### 🎨 UI Components (UI 컴포넌트)
+
+#### 새로운 컴포넌트
+- **AdminNav**: 관리자 패널 사이드바 네비게이션
+- **ArticleList**: 아티클 목록 및 관리 기능
+- **ArticleForm**: 아티클 생성/수정 폼
+- **CurriculumList**: 커리큘럼 목록 및 관리 기능
+- **CurriculumForm**: 커리큘럼 생성/수정 폼
+- **CurriculumItemsManager**: 커리큘럼 아티클 연결 관리
+- **NoteEditor**: 학습노트 텍스트 에디터
+
+#### shadcn/ui 컴포넌트 추가
+- Alert Dialog: 삭제 확인 다이얼로그
+- Input: 폼 입력 필드
+- Textarea: 다중 라인 텍스트 입력
+- Label: 폼 레이블
+- Select: 드롭다운 선택
+
+#### 기존 컴포넌트 개선
+- **GNB**: 관리자 메뉴 표시 (is_admin 체크)
+- **LearningAccordion**: 노트 에디터 통합, 확장/축소 UI 개선
+
+### ⚙️ Server Actions (서버 액션)
+
+#### Admin Actions (`components/admin/actions.ts`)
+- `createArticleAction`: 아티클 생성
+- `updateArticleAction`: 아티클 수정
+- `deleteArticleAction`: 아티클 삭제
+- `createCurriculumAction`: 커리큘럼 생성
+- `updateCurriculumAction`: 커리큘럼 수정
+- `deleteCurriculumAction`: 커리큘럼 삭제
+- `addCurriculumItemAction`: 커리큘럼에 아티클 추가
+- `updateCurriculumItemAction`: 커리큘럼 아이템 수정
+- `deleteCurriculumItemAction`: 커리큘럼 아이템 제거
+
+#### Learning Actions (`components/learning/actions.ts`)
+- `saveNoteAction`: 학습노트 저장 (upsert)
+- `deleteNoteAction`: 학습노트 삭제
+
+### 🔐 Security (보안)
+
+#### 관리자 권한 체크
+- 미들웨어: `/admin/*` 경로 접근 시 is_admin 체크
+- 서버 액션: 모든 admin 액션에서 권한 검증
+- RLS 정책: DB 레벨에서 관리자 권한 검증
+
+#### 데이터 격리
+- 학습노트: RLS로 본인 enrollment만 접근 가능
+- 완료 항목: 기존과 동일하게 본인 데이터만 관리
+
+### 🚀 Performance (성능)
+
+#### 최적화
+- 학습노트 자동 저장: 1초 디바운스로 불필요한 DB 요청 최소화
+- Optimistic UI: 학습노트 저장 시 즉각적인 UI 피드백
+- 인덱스: learning_notes 테이블에 enrollment_id, curriculum_item_id 인덱스 추가
+
+### 📱 UX Improvements (사용자 경험 개선)
+
+#### 관리자 경험
+- 직관적인 CRUD 인터페이스
+- 실시간 피드백 (Toast 알림)
+- 확인 다이얼로그로 실수 방지
+- 드래그 가능한 순서 표시 (GripVertical 아이콘)
+
+#### 학습자 경험
+- 노트 작성으로 학습 내용 정리 가능
+- 자동 저장으로 데이터 손실 방지
+- 큐레이터 노트와 학습노트 구분으로 학습 가이드 제공
+- 확장 가능한 UI로 화면 공간 효율적 사용
+
+### 🎯 Impact (영향)
+
+이 업데이트를 통해:
+- **관리자**: 콘텐츠를 웹 UI로 직접 관리할 수 있어 MVP 검증이 가능합니다
+- **학습자**: 노션처럼 학습노트를 작성하며 더 효과적으로 학습할 수 있습니다
+- **플랫폼**: 관리자 없이도 콘텐츠를 추가/수정할 수 있어 확장 가능합니다
+
+### 📋 Setup Required (설정 필요)
+
+#### 관리자 권한 부여
+Supabase SQL Editor에서 다음 쿼리 실행:
+```sql
+UPDATE profiles SET is_admin = true WHERE email = 'taekil.design@gmail.com';
+```
+
+#### 데이터베이스 마이그레이션
+Supabase SQL Editor에서 다음 파일 실행:
+```
+supabase/migrations/20260121_add_admin_and_notes.sql
+```
+
+또는 전체 스키마 재생성:
+```
+supabase/schema.sql
+```
+
+### 🐛 Bug Fixes (버그 수정)
+
+- 없음 (신규 기능 추가)
+
+### 🔜 Next Steps (다음 단계)
+
+v1.2.0에서 추가될 기능:
+- [ ] 학습노트 내보내기 (PDF, Markdown)
+- [ ] 검색 기능 (아티클, 커리큘럼)
+- [ ] 필터링 (난이도, 카테고리)
+- [ ] 학습 통계 대시보드
+- [ ] 커리큘럼 추천 알고리즘
+
+---
+
 ## [1.0.1] - 2026-01-14
 
 ### 📚 Documentation (문서화)

@@ -10,6 +10,7 @@ import { User } from "@supabase/supabase-js";
 export function GNB() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -19,6 +20,17 @@ export function GNB() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
+
+      // Check admin status
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(profile?.is_admin === true);
+      }
+
       setLoading(false);
     };
 
@@ -26,8 +38,20 @@ export function GNB() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+
+      // Check admin status on auth change
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", session.user.id)
+          .single();
+        setIsAdmin(profile?.is_admin === true);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -75,6 +99,18 @@ export function GNB() {
                 }`}
               >
                 내 학습
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  pathname?.startsWith("/admin")
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                관리자
               </Link>
             )}
           </nav>

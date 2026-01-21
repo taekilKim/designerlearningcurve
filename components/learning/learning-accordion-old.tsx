@@ -12,7 +12,6 @@ import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toggleCompletionAction } from "./actions";
 import { toast } from "sonner";
-import { NoteEditor } from "./note-editor";
 
 interface LearningAccordionProps {
   enrollments: any[];
@@ -20,7 +19,6 @@ interface LearningAccordionProps {
 
 export function LearningAccordion({ enrollments }: LearningAccordionProps) {
   const [localEnrollments, setLocalEnrollments] = useState(enrollments);
-  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   const handleToggleCompletion = async (
     enrollmentId: string,
@@ -117,38 +115,29 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                 (item: any, index: number) => {
                   const isCompleted =
                     item.completed_items && item.completed_items.length > 0;
-                  const itemKey = `${enrollment.id}-${item.id}`;
-                  const isExpanded = expandedItem === itemKey;
-                  const note = item.learning_notes?.[0];
 
                   return (
                     <div
                       key={item.id}
-                      className="rounded-lg border bg-card"
+                      className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                     >
-                      {/* Item header - always visible */}
-                      <div
-                        className={`flex items-start gap-4 p-4 cursor-pointer hover:bg-accent/5 transition-colors ${
-                          isExpanded ? "border-b" : ""
-                        }`}
-                        onClick={() =>
-                          setExpandedItem(isExpanded ? null : itemKey)
-                        }
-                      >
-                        <Checkbox
-                          id={`item-${item.id}`}
-                          checked={isCompleted}
-                          onCheckedChange={(checked) => {
-                            handleToggleCompletion(
-                              enrollment.id,
-                              item.id,
-                              checked as boolean
-                            );
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
+                      <Checkbox
+                        id={`item-${item.id}`}
+                        checked={isCompleted}
+                        onCheckedChange={(checked) => {
+                          handleToggleCompletion(
+                            enrollment.id,
+                            item.id,
+                            checked as boolean
+                          );
+                        }}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`item-${item.id}`}
+                          className="cursor-pointer"
+                        >
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div className="flex items-start gap-2">
                               <span className="text-sm font-semibold text-muted-foreground">
@@ -174,64 +163,13 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </div>
-                          {item.curator_note && !isExpanded && (
+                          {item.curator_note && (
                             <div className="mt-2 p-3 bg-muted rounded-md text-sm text-muted-foreground">
                               💡 {item.curator_note}
                             </div>
                           )}
-                        </div>
+                        </label>
                       </div>
-
-                      {/* Expanded content - article info + note editor */}
-                      {isExpanded && (
-                        <div className="p-4">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Left: Article info */}
-                            <div className="space-y-4">
-                              <div>
-                                <h5 className="font-semibold mb-2">아티클 정보</h5>
-                                {item.article?.description && (
-                                  <p className="text-sm text-muted-foreground mb-3">
-                                    {item.article.description}
-                                  </p>
-                                )}
-                                {item.article?.author && (
-                                  <p className="text-sm text-muted-foreground mb-3">
-                                    작성자: {item.article.author}
-                                  </p>
-                                )}
-                                <a
-                                  href={item.article?.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                  아티클 읽기
-                                </a>
-                              </div>
-
-                              {item.curator_note && (
-                                <div>
-                                  <h5 className="font-semibold mb-2">큐레이터 노트</h5>
-                                  <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground whitespace-pre-wrap">
-                                    {item.curator_note}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Right: Note editor */}
-                            <div>
-                              <NoteEditor
-                                enrollmentId={enrollment.id}
-                                curriculumItemId={item.id}
-                                initialContent={note?.content || ""}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 }

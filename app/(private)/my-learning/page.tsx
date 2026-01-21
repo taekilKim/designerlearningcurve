@@ -15,7 +15,7 @@ export default async function MyLearningPage() {
     redirect("/");
   }
 
-  // Fetch user's enrollments with curriculum details
+  // Fetch user's enrollments with curriculum details and learning notes
   const { data: enrollments, error } = await supabase
     .from("enrollments")
     .select(`
@@ -28,6 +28,11 @@ export default async function MyLearningPage() {
           completed_items(
             id,
             completed_at
+          ),
+          learning_notes(
+            id,
+            content,
+            updated_at
           )
         )
       )
@@ -69,11 +74,11 @@ export default async function MyLearningPage() {
   });
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <div className="container mx-auto px-4 py-12 max-w-7xl">
       <div className="mb-12">
         <h1 className="text-4xl font-bold mb-4">내 학습</h1>
         <p className="text-lg text-muted-foreground">
-          등록한 커리큘럼의 학습 진행 상황을 확인하고 계속 학습해보세요
+          등록한 커리큘럼의 학습 진행 상황을 확인하고 학습노트를 작성해보세요
         </p>
       </div>
 
