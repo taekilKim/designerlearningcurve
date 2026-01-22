@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,19 +21,26 @@ export async function GET(request: Request) {
     console.log('[Auth Callback] Exchange result:', { data: !!data, error })
 
     if (!error) {
+      // Revalidate to ensure client state updates
+      revalidatePath('/', 'layout')
+
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
 
       console.log('[Auth Callback] Forwarded host:', forwardedHost)
       console.log('[Auth Callback] Is local:', isLocalEnv)
 
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      const redirectUrl = isLocalEnv
+        ? `${origin}${next}`
+        : forwardedHost
+        ? `https://${forwardedHost}${next}`
+        : `${origin}${next}`
+
+      // Add timestamp to prevent caching
+      const urlWithTimestamp = `${redirectUrl}?auth_refresh=${Date.now()}`
+
+      console.log('[Auth Callback] Redirecting to:', urlWithTimestamp)
+      return NextResponse.redirect(urlWithTimestamp)
     } else {
       console.error('[Auth Callback] Exchange error:', error)
     }
