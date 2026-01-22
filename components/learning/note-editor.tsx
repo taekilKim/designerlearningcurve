@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { saveNoteAction } from "./actions";
 import { toast } from "sonner";
-import { FileEdit, Check } from "lucide-react";
+import { FileEdit, Check, Save } from "lucide-react";
 
 interface NoteEditorProps {
   enrollmentId: string;
@@ -19,9 +20,9 @@ export function NoteEditor({
   const [content, setContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Update content when initialContent changes (e.g., after data fetch)
-  // Only update if we haven't modified the content yet
   useEffect(() => {
     if (initialContent && content === "") {
       console.log('[Note Editor] Loading initial content:', { enrollmentId, contentLength: initialContent.length });
@@ -29,40 +30,41 @@ export function NoteEditor({
     }
   }, [initialContent, enrollmentId]);
 
-  // Debounced save function
-  useEffect(() => {
-    // Don't save on initial render if content hasn't changed
-    if (content === initialContent) return;
+  // Track if content has changed
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    setIsDirty(newContent !== initialContent);
+  };
 
-    const timeoutId = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        console.log('[Note Editor] Saving note...', { enrollmentId, contentLength: content.length });
+  // Manual save function
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      console.log('[Note Editor] Saving note...', { enrollmentId, contentLength: content.length });
 
-        const result = await saveNoteAction(
-          enrollmentId,
-          content
-        );
+      const result = await saveNoteAction(
+        enrollmentId,
+        content
+      );
 
-        console.log('[Note Editor] Save result:', result);
+      console.log('[Note Editor] Save result:', result);
 
-        if (result.success) {
-          setLastSaved(new Date());
-        } else {
-          const errorMessage = result.error || "알 수 없는 오류";
-          toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
-          console.error('[Note Editor] Save failed:', result.error);
-        }
-      } catch (error) {
-        console.error('[Note Editor] Exception:', error);
-        toast.error(`노트 저장 중 오류가 발생했습니다: ${error}`);
-      } finally {
-        setIsSaving(false);
+      if (result.success) {
+        setLastSaved(new Date());
+        setIsDirty(false);
+        toast.success("노트가 저장되었습니다.");
+      } else {
+        const errorMessage = result.error || "알 수 없는 오류";
+        toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
+        console.error('[Note Editor] Save failed:', result.error);
       }
-    }, 1000); // Debounce for 1 second
-
-    return () => clearTimeout(timeoutId);
-  }, [content, enrollmentId, initialContent]);
+    } catch (error) {
+      console.error('[Note Editor] Exception:', error);
+      toast.error(`노트 저장 중 오류가 발생했습니다: ${error}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const getTimeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -76,31 +78,43 @@ export function NoteEditor({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="flex items-center gap-2">
-          <FileEdit className="h-4 w-4" />
-          학습 노트
-        </Label>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {isSaving ? (
-            <span>저장 중...</span>
-          ) : lastSaved ? (
-            <span className="flex items-center gap-1">
+    <div className="space-y-3">
+      <Label className="flex items-center gap-2">
+        <FileEdit className="h-4 w-4" />
+        학습 노트
+      </Label>
+      <RichTextEditor
+        content={content}
+        onChange={handleContentChange}
+        placeholder="이 커리큘럼에 대한 학습 내용, 생각, 질문 등을 자유롭게 작성하세요..."
+      />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          텍스트 포맷팅을 사용할 수 있습니다.
+        </p>
+        <div className="flex items-center gap-3">
+          {lastSaved && !isDirty && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Check className="h-3 w-3" />
               {getTimeAgo(lastSaved)} 저장됨
             </span>
-          ) : null}
+          )}
+          {isDirty && (
+            <span className="text-xs text-amber-600">
+              저장되지 않은 변경사항
+            </span>
+          )}
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || !isDirty}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? "저장 중..." : "저장"}
+          </Button>
         </div>
       </div>
-      <RichTextEditor
-        content={content}
-        onChange={setContent}
-        placeholder="이 커리큘럼에 대한 학습 내용, 생각, 질문 등을 자유롭게 작성하세요..."
-      />
-      <p className="text-xs text-muted-foreground">
-        노트는 자동으로 저장됩니다. 텍스트 포맷팅을 사용할 수 있습니다.
-      </p>
     </div>
   );
 }
