@@ -56,11 +56,17 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Handle learning_notes - can be array or object depending on query
+  const learningNotesContent = Array.isArray(enrollment.learning_notes)
+    ? enrollment.learning_notes?.[0]?.content || ""
+    : enrollment.learning_notes?.content || "";
+
   console.log('[Curriculum Detail] Enrollment data:', {
     enrollmentId: enrollment.id,
     curriculumId: enrollment.curriculum_id,
     learningNotes: enrollment.learning_notes,
-    initialContent: enrollment.learning_notes?.[0]?.content || '(empty)'
+    isArray: Array.isArray(enrollment.learning_notes),
+    initialContent: learningNotesContent
   });
 
   // Sort curriculum items by sequence
@@ -107,7 +113,7 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
             <div className="rounded-lg border bg-card p-6">
               <NoteEditor
                 enrollmentId={enrollment.id}
-                initialContent={enrollment.learning_notes?.[0]?.content || ""}
+                initialContent={learningNotesContent}
               />
             </div>
           </div>
