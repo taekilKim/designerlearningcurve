@@ -88,12 +88,12 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
   };
 
   return (
-    <Accordion type="single" collapsible className="w-full space-y-4">
+    <Accordion type="single" collapsible className="w-full space-y-6">
       {localEnrollments.map((enrollment) => (
         <AccordionItem
           key={enrollment.id}
           value={enrollment.id}
-          className="border rounded-lg px-6 py-2"
+          className="border rounded-lg px-6 py-2 bg-card"
         >
           <AccordionTrigger className="hover:no-underline">
             <div className="flex-1 text-left pr-4">

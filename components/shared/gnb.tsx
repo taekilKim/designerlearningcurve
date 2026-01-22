@@ -118,14 +118,18 @@ export function GNB() {
         </div>
         <div className="flex items-center gap-4">
           {loading ? null : user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden md:inline">
+            <>
+              <span className="text-sm text-muted-foreground hidden md:block">
                 {user.email}
               </span>
-              <Button variant="outline" onClick={handleSignOut}>
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="hidden md:flex"
+              >
                 로그아웃
               </Button>
-            </div>
+            </>
           ) : (
             <Button onClick={handleSignIn}>로그인</Button>
           )}
