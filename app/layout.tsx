@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 import { GNB } from "@/components/shared/gnb";
 import { BottomNav } from "@/components/shared/bottom-nav";
@@ -9,14 +9,6 @@ export const metadata: Metadata = {
   description: "아티클을 순서 있는 커리큘럼으로 제공하여 학습 완주를 돕는 웹 서비스",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1.0,
-  maximumScale: 1.0,
-  minimumScale: 1.0,
-  userScalable: false,
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,6 +17,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        />
         <link
           rel="stylesheet"
           as="style"
