@@ -93,7 +93,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
         <AccordionItem
           key={enrollment.id}
           value={enrollment.id}
-          className="border rounded-lg px-6 py-2 bg-card"
+          className="border rounded-lg px-6 py-2 bg-card [&:last-child]:border-b"
         >
           <AccordionTrigger className="hover:no-underline">
             <div className="flex-1 text-left pr-4">
