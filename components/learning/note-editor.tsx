@@ -28,18 +28,25 @@ export function NoteEditor({
     const timeoutId = setTimeout(async () => {
       setIsSaving(true);
       try {
+        console.log('[Note Editor] Saving note...', { enrollmentId, contentLength: content.length });
+
         const result = await saveNoteAction(
           enrollmentId,
           content
         );
 
+        console.log('[Note Editor] Save result:', result);
+
         if (result.success) {
           setLastSaved(new Date());
         } else {
-          toast.error("노트 저장 중 오류가 발생했습니다.");
+          const errorMessage = result.error || "알 수 없는 오류";
+          toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
+          console.error('[Note Editor] Save failed:', result.error);
         }
       } catch (error) {
-        toast.error("노트 저장 중 오류가 발생했습니다.");
+        console.error('[Note Editor] Exception:', error);
+        toast.error(`노트 저장 중 오류가 발생했습니다: ${error}`);
       } finally {
         setIsSaving(false);
       }
