@@ -80,7 +80,8 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  '실무에 무조건 써먹는 핵심 UI 컴포넌트 16개',
  'Google Material Design 기반 실무에서 자주 사용되는 UI 컴포넌트 16가지를 소개합니다.',
  'https://blog.openpath.kr/%EC%8B%A4%EB%AC%B4%EC%97%90-%EB%AC%B4%EC%A1%B0%EA%B1%B4-%EC%8D%A8%EB%A8%B9%EB%8A%94-%ED%95%B5%EC%8B%AC-ui-%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8-16%EA%B0%9C-25032',
- '오픈패스 블로그', NULL, NOW());
+ '오픈패스 블로그', NULL, NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- Update existing curriculum or create new ones
 -- Curriculum 1: UX/UI 디자인 기초
@@ -171,7 +172,8 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  '2025 UX 디자인 트렌드 총정리',
  '기획자와 디자이너가 반드시 알아야 할 2025년 UX 디자인의 7가지 주요 변화와 트렌드',
  'https://planez.kr/entry/2025-UX-%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8A%B8%EB%A0%8C%EB%93%9C-%EC%B4%9D%EC%A0%95%EB%A6%AC-%E2%80%93-%EA%B8%B0%ED%9A%8D%EC%9E%90%EB%9D%BC%EB%A9%B4-%EB%B0%98%EB%93%9C%EC%8B%9C-%EC%95%8C%EC%95%84%EC%95%BC-%ED%95%A0-7%EA%B0%80%EC%A7%80-%EB%B3%80%ED%99%94',
- '플래니지', NULL, NOW());
+ '플래니지', NULL, NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- 레퍼런스 수집과 활용 Articles
 INSERT INTO articles (id, title, description, url, author, thumbnail_url, created_at) VALUES
@@ -194,7 +196,8 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  '현직 디자이너가 추천하는 UXUI 레퍼런스 사이트',
  'UXUI 디자이너가 실무에서 활용하는 필수 레퍼런스 사이트와 활용 팁',
  'https://brunch.co.kr/@renajang/10',
- 'Brunch - renajang', NULL, NOW());
+ 'Brunch - renajang', NULL, NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- 사용자 리서치 실무 Articles
 INSERT INTO articles (id, title, description, url, author, thumbnail_url, created_at) VALUES
@@ -217,7 +220,8 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  'UX 디자이너가 반드시 알아야 할 UX 리서치 기법 A-Z',
  '관찰법, 인터뷰, 설문조사 등 UX 리서치의 모든 기법을 총정리한 완전 가이드',
  'https://brunch.co.kr/@ebprux/621',
- 'Brunch - ebprux', NULL, NOW());
+ 'Brunch - ebprux', NULL, NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- 문제 정의와 가설 설정 Articles
 INSERT INTO articles (id, title, description, url, author, thumbnail_url, created_at) VALUES
@@ -240,7 +244,8 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  '디자인 씽킹 기법으로 아이디어 시각화하기',
  '실무 중심의 디자인 씽킹 워크숍: 문제 해결과 협업 확장 방법',
  'https://epart.com/%EB%94%94%EC%9E%90%EC%9D%B8-%EC%94%BD%ED%82%B9-%EA%B8%B0%EB%B2%95%EC%9C%BC%EB%A1%9C-%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4%EB%A5%BC-%EC%8B%9C%EA%B0%81%ED%99%94%ED%95%98%EA%B3%A0-%ED%98%91%EC%97%85/',
- 'epart', NULL, NOW());
+ 'epart', NULL, NOW())
+ON CONFLICT (id) DO NOTHING;
 
 -- === Create New Curriculums ===
 INSERT INTO curriculums (id, title, description, thumbnail_url, created_at) VALUES
