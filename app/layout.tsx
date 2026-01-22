@@ -25,6 +25,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
         <link
           rel="stylesheet"
           as="style"
@@ -32,7 +36,7 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased touch-pan-x touch-pan-y">
         <GNB />
         <main className="min-h-screen pb-16 md:pb-0">{children}</main>
         <BottomNav />

@@ -104,7 +104,7 @@ INSERT INTO articles (id, title, description, url, author, thumbnail_url, create
  '실무에 무조건 써먹는 핵심 UI 컴포넌트 16개',
  'Google Material Design 기반 실무에서 자주 사용되는 UI 컴포넌트 16가지를 소개합니다.',
  'https://blog.openpath.kr/%EC%8B%A4%EB%AC%B4%EC%97%90-%EB%AC%B4%EC%A1%B0%EA%B1%B4-%EC%8D%A8%EB%A8%B9%EB%8A%94-%ED%95%B5%EC%8B%AC-ui-%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8-16%EA%B0%9C-25032',
-,
+ '오픈패스 블로그', NULL, NOW()),
 
 ('a3333333-3333-3333-3333-333333333335',
  '피그마 프로토타이핑 기본 기능 익히기',
