@@ -44,6 +44,14 @@ export default async function MyLearningPage() {
     console.error("Error fetching enrollments:", error);
   }
 
+  // Debug: Log what we got from the database
+  console.log('[My Learning] Fetched enrollments:', JSON.stringify(enrollments?.map(e => ({
+    id: e.id,
+    curriculum_id: e.curriculum_id,
+    learning_notes: e.learning_notes,
+    learning_notes_count: e.learning_notes?.length || 0
+  })), null, 2));
+
   // Process enrollments to include completion data
   const processedEnrollments = enrollments?.map((enrollment: any) => {
     const items = enrollment.curriculum?.curriculum_items || [];
