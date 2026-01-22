@@ -56,7 +56,7 @@ export function RichTextEditor({
       const currentContent = editor.getHTML();
       // Only update if content is significantly different (not just formatting)
       if (content && currentContent !== content) {
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, { emitUpdate: false });
       }
     }
   }, [content, editor]);
