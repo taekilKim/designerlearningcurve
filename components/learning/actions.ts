@@ -56,18 +56,13 @@ export async function saveNoteAction(
   enrollmentId: string,
   content: string
 ) {
-  console.log('[Server Action] saveNoteAction called:', { enrollmentId, contentLength: content.length });
-
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log('[Server Action] User:', user?.id);
-
   if (!user) {
-    console.error('[Server Action] User not authenticated');
     return { success: false, error: "Not authenticated" };
   }
 
@@ -79,11 +74,8 @@ export async function saveNoteAction(
       .eq("id", enrollmentId)
       .single();
 
-    console.log('[Server Action] Enrollment:', enrollment);
-
     // Upsert note (insert or update)
-    console.log('[Server Action] Attempting upsert...');
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("learning_notes")
       .upsert(
         {
@@ -93,13 +85,10 @@ export async function saveNoteAction(
         {
           onConflict: "enrollment_id",
         }
-      )
-      .select();
-
-    console.log('[Server Action] Upsert result:', { data, error });
+      );
 
     if (error) {
-      console.error("[Server Action] Error saving note:", error);
+      console.error("Error saving note:", error);
       return { success: false, error: error.message };
     }
 
@@ -111,7 +100,7 @@ export async function saveNoteAction(
 
     return { success: true };
   } catch (error) {
-    console.error("[Server Action] Exception:", error);
+    console.error("Error saving note:", error);
     return { success: false, error: "Unknown error" };
   }
 }

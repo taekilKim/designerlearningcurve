@@ -22,27 +22,24 @@ export function NoteEditor({
   const [content, setContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Update content when initialContent changes (e.g., after data fetch)
   useEffect(() => {
-    console.log('[Note Editor] useEffect - initialContent:', { initialContentLength: initialContent?.length || 0 });
     if (initialContent && initialContent !== content) {
-      console.log('[Note Editor] Setting content from initialContent');
       setContent(initialContent);
-      setIsDirty(false);
+      setHasUnsavedChanges(false);
     }
   }, [initialContent]);
 
   // Track if content has changed - use useCallback to prevent recreating function
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
-    setIsDirty(newContent !== initialContent);
-  }, [initialContent]);
+    setHasUnsavedChanges(true);
+  }, []);
 
   // Manual save function
   const handleSave = async () => {
-    console.log('[Note Editor] Starting save:', { enrollmentId, contentLength: content.length });
     setIsSaving(true);
     try {
       const result = await saveNoteAction(
@@ -50,22 +47,18 @@ export function NoteEditor({
         content
       );
 
-      console.log('[Note Editor] Save result:', result);
-
       if (result.success) {
         setLastSaved(new Date());
-        setIsDirty(false);
+        setHasUnsavedChanges(false);
         toast.success("노트가 저장되었습니다.");
 
         // Force refresh the page data
         router.refresh();
       } else {
         const errorMessage = result.error || "알 수 없는 오류";
-        console.error('[Note Editor] Save failed:', result.error);
         toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
       }
     } catch (error) {
-      console.error('[Note Editor] Save exception:', error);
       toast.error("노트 저장 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
@@ -99,20 +92,20 @@ export function NoteEditor({
           텍스트 포맷팅을 사용할 수 있습니다.
         </p>
         <div className="flex items-center gap-3">
-          {lastSaved && !isDirty && (
+          {lastSaved && !hasUnsavedChanges && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Check className="h-3 w-3" />
               {getTimeAgo(lastSaved)} 저장됨
             </span>
           )}
-          {isDirty && (
+          {hasUnsavedChanges && (
             <span className="text-xs text-amber-600">
               저장되지 않은 변경사항
             </span>
           )}
           <Button
             onClick={handleSave}
-            disabled={isSaving || !isDirty}
+            disabled={isSaving || !hasUnsavedChanges}
             size="sm"
             className="flex items-center gap-2"
           >

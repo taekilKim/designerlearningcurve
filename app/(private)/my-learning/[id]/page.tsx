@@ -61,14 +61,6 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
     ? enrollment.learning_notes?.[0]?.content || ""
     : enrollment.learning_notes?.content || "";
 
-  console.log('[Curriculum Detail] Enrollment data:', {
-    enrollmentId: enrollment.id,
-    curriculumId: enrollment.curriculum_id,
-    learningNotes: enrollment.learning_notes,
-    isArray: Array.isArray(enrollment.learning_notes),
-    initialContent: learningNotesContent
-  });
-
   // Sort curriculum items by sequence
   const sortedItems = [...(enrollment.curriculum?.curriculum_items || [])].sort(
     (a, b) => a.sequence - b.sequence
