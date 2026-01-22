@@ -17,6 +17,8 @@ export function NoteEditor({
   enrollmentId,
   initialContent,
 }: NoteEditorProps) {
+  console.log('[Note Editor] Initialized with:', { enrollmentId, initialContentLength: initialContent?.length || 0, initialContent: initialContent?.substring(0, 100) });
+
   const [content, setContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -24,7 +26,9 @@ export function NoteEditor({
 
   // Update content when initialContent changes (e.g., after data fetch)
   useEffect(() => {
+    console.log('[Note Editor] useEffect - initialContent changed:', { initialContent: initialContent?.substring(0, 100), content: content?.substring(0, 100) });
     if (initialContent && content === "") {
+      console.log('[Note Editor] Setting content from initialContent');
       setContent(initialContent);
     }
   }, [initialContent, enrollmentId]);
@@ -37,6 +41,7 @@ export function NoteEditor({
 
   // Manual save function
   const handleSave = async () => {
+    console.log('[Note Editor] Starting save:', { enrollmentId, contentLength: content.length, content: content.substring(0, 100) });
     setIsSaving(true);
     try {
       const result = await saveNoteAction(
@@ -44,15 +49,19 @@ export function NoteEditor({
         content
       );
 
+      console.log('[Note Editor] Save result:', result);
+
       if (result.success) {
         setLastSaved(new Date());
         setIsDirty(false);
         toast.success("노트가 저장되었습니다.");
       } else {
         const errorMessage = result.error || "알 수 없는 오류";
+        console.error('[Note Editor] Save failed:', result.error);
         toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
       }
     } catch (error) {
+      console.error('[Note Editor] Save exception:', error);
       toast.error("노트 저장 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
