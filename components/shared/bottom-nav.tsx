@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { House, BookOpen, GraduationCap, UserGear } from "@phosphor-icons/react";
+import { House, BookOpen, GraduationCap, UserGear, SignOut, SignIn } from "@phosphor-icons/react";
+import { toast } from "sonner";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -58,6 +59,21 @@ export function BottomNav() {
   }, [supabase.auth]);
 
   if (loading) return null;
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("로그아웃되었습니다");
+    window.location.href = "/";
+  };
+
+  const handleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
 
   const navItems = [
     {
@@ -116,6 +132,36 @@ export function BottomNav() {
             </Link>
           );
         })}
+        {/* Login/Logout Button */}
+        {user ? (
+          <button
+            onClick={handleSignOut}
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1"
+          >
+            <SignOut
+              size={24}
+              weight="regular"
+              className="text-muted-foreground"
+            />
+            <span className="text-xs text-muted-foreground">
+              로그아웃
+            </span>
+          </button>
+        ) : (
+          <button
+            onClick={handleSignIn}
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1"
+          >
+            <SignIn
+              size={24}
+              weight="regular"
+              className="text-muted-foreground"
+            />
+            <span className="text-xs text-muted-foreground">
+              로그인
+            </span>
+          </button>
+        )}
       </div>
     </nav>
   );
