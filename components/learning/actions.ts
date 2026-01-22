@@ -67,8 +67,10 @@ export async function saveNoteAction(
   }
 
   try {
+    console.log('[Save Note] Attempting to save note:', { enrollmentId, contentLength: content.length });
+
     // Upsert note (insert or update)
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("learning_notes")
       .upsert(
         {
@@ -78,7 +80,10 @@ export async function saveNoteAction(
         {
           onConflict: "enrollment_id",
         }
-      );
+      )
+      .select();
+
+    console.log('[Save Note] Result:', { data, error });
 
     if (error) {
       console.error("Error saving note:", error);
@@ -88,7 +93,7 @@ export async function saveNoteAction(
     // No need to revalidate as we're using optimistic UI
     return { success: true };
   } catch (error) {
-    console.error("Error saving note:", error);
+    console.error("Error saving note (catch):", error);
     return { success: false, error: "Unknown error" };
   }
 }

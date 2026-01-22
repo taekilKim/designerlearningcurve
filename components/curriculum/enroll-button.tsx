@@ -49,20 +49,25 @@ export function EnrollButton({
 
       if (!user) {
         toast.error("사용자 정보를 가져올 수 없습니다.");
+        setIsLoading(false);
         return;
       }
 
-      const { error } = await supabase.from("enrollments").insert({
+      console.log('[Enroll] Attempting to enroll:', { userId: user.id, curriculumId });
+
+      const { data, error } = await supabase.from("enrollments").insert({
         user_id: user.id,
         curriculum_id: curriculumId,
-      });
+      }).select();
+
+      console.log('[Enroll] Result:', { data, error });
 
       if (error) {
         if (error.code === "23505") {
           // Unique constraint violation - already enrolled
           toast.info("이미 등록된 커리큘럼입니다.");
         } else {
-          toast.error("등록 중 오류가 발생했습니다.");
+          toast.error(`등록 중 오류가 발생했습니다: ${error.message}`);
           console.error("Enrollment error:", error);
         }
       } else {
@@ -73,8 +78,8 @@ export function EnrollButton({
         }, 1000);
       }
     } catch (error) {
+      console.error("Enrollment error (catch):", error);
       toast.error("등록 중 오류가 발생했습니다.");
-      console.error("Enrollment error:", error);
     } finally {
       setIsLoading(false);
     }
