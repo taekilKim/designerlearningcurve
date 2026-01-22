@@ -12,27 +12,28 @@ export function BottomNav() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
 
-      // Check admin status
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", user.id)
-          .single();
-        setIsAdmin(profile?.is_admin === true);
+        // Check admin status
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(profile?.is_admin === true);
+        }
+      } catch (error) {
+        console.error("[Bottom Nav] Failed to fetch user:", error);
       }
-
-      setLoading(false);
     };
 
     fetchUser();
@@ -44,21 +45,23 @@ export function BottomNav() {
 
       // Check admin status on auth change
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", session.user.id)
-          .single();
-        setIsAdmin(profile?.is_admin === true);
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_admin")
+            .eq("id", session.user.id)
+            .single();
+          setIsAdmin(profile?.is_admin === true);
+        } catch (error) {
+          console.error("[Bottom Nav] Failed to fetch admin status:", error);
+        }
       } else {
         setIsAdmin(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
-
-  if (loading) return null;
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
