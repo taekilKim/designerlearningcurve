@@ -50,10 +50,14 @@ export function RichTextEditor({
     },
   });
 
-  // Update editor content when prop changes
+  // Update editor content when prop changes (but avoid infinite loops)
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      const currentContent = editor.getHTML();
+      // Only update if content is significantly different (not just formatting)
+      if (content && currentContent !== content) {
+        editor.commands.setContent(content, false);
+      }
     }
   }, [content, editor]);
 

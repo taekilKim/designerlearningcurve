@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { saveNoteAction } from "./actions";
 import { toast } from "sonner";
 import { FileEdit, Check, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface NoteEditorProps {
   enrollmentId: string;
@@ -17,8 +18,7 @@ export function NoteEditor({
   enrollmentId,
   initialContent,
 }: NoteEditorProps) {
-  console.log('[Note Editor] Initialized with:', { enrollmentId, initialContentLength: initialContent?.length || 0, initialContent: initialContent?.substring(0, 100) });
-
+  const router = useRouter();
   const [content, setContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -26,22 +26,23 @@ export function NoteEditor({
 
   // Update content when initialContent changes (e.g., after data fetch)
   useEffect(() => {
-    console.log('[Note Editor] useEffect - initialContent changed:', { initialContent: initialContent?.substring(0, 100), content: content?.substring(0, 100) });
-    if (initialContent && content === "") {
+    console.log('[Note Editor] useEffect - initialContent:', { initialContentLength: initialContent?.length || 0 });
+    if (initialContent && initialContent !== content) {
       console.log('[Note Editor] Setting content from initialContent');
       setContent(initialContent);
+      setIsDirty(false);
     }
-  }, [initialContent, enrollmentId]);
+  }, [initialContent]);
 
-  // Track if content has changed
-  const handleContentChange = (newContent: string) => {
+  // Track if content has changed - use useCallback to prevent recreating function
+  const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
     setIsDirty(newContent !== initialContent);
-  };
+  }, [initialContent]);
 
   // Manual save function
   const handleSave = async () => {
-    console.log('[Note Editor] Starting save:', { enrollmentId, contentLength: content.length, content: content.substring(0, 100) });
+    console.log('[Note Editor] Starting save:', { enrollmentId, contentLength: content.length });
     setIsSaving(true);
     try {
       const result = await saveNoteAction(
@@ -55,6 +56,9 @@ export function NoteEditor({
         setLastSaved(new Date());
         setIsDirty(false);
         toast.success("노트가 저장되었습니다.");
+
+        // Force refresh the page data
+        router.refresh();
       } else {
         const errorMessage = result.error || "알 수 없는 오류";
         console.error('[Note Editor] Save failed:', result.error);
