@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { LearningAccordion } from "@/components/learning/learning-accordion";
+import { EnrollmentCard } from "@/components/learning/enrollment-card";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,14 +44,6 @@ export default async function MyLearningPage() {
     console.error("Error fetching enrollments:", error);
   }
 
-  // Debug: Log what we got from the database
-  console.log('[My Learning] Fetched enrollments:', JSON.stringify(enrollments?.map(e => ({
-    id: e.id,
-    curriculum_id: e.curriculum_id,
-    learning_notes: e.learning_notes,
-    learning_notes_count: e.learning_notes?.length || 0
-  })), null, 2));
-
   // Process enrollments to include completion data
   const processedEnrollments = enrollments?.map((enrollment: any) => {
     const items = enrollment.curriculum?.curriculum_items || [];
@@ -82,16 +74,20 @@ export default async function MyLearningPage() {
   });
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold mb-4">내 학습</h1>
-        <p className="text-lg text-muted-foreground">
+    <div className="container mx-auto px-4 py-12 max-w-7xl mb-20 md:mb-0">
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold mb-3">내 학습</h1>
+        <p className="text-base md:text-lg text-muted-foreground">
           등록한 커리큘럼의 학습 진행 상황을 확인하고 학습노트를 작성해보세요
         </p>
       </div>
 
       {processedEnrollments && processedEnrollments.length > 0 ? (
-        <LearningAccordion enrollments={processedEnrollments} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {processedEnrollments.map((enrollment: any) => (
+            <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
+          ))}
+        </div>
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">

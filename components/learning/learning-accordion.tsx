@@ -22,14 +22,6 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
   const [localEnrollments, setLocalEnrollments] = useState(enrollments);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
-  // Debug: Log enrollment data on mount
-  console.log('[Learning Accordion] Enrollments received:', enrollments.map(e => ({
-    id: e.id,
-    curriculum_title: e.curriculum?.title,
-    learning_notes: e.learning_notes,
-    learning_notes_content: e.learning_notes?.[0]?.content || '(empty)'
-  })));
-
   const handleToggleCompletion = async (
     enrollmentId: string,
     curriculumItemId: string,

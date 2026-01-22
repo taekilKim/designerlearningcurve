@@ -67,10 +67,8 @@ export async function saveNoteAction(
   }
 
   try {
-    console.log('[Save Note] Attempting to save note:', { enrollmentId, contentLength: content.length });
-
     // Upsert note (insert or update)
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("learning_notes")
       .upsert(
         {
@@ -80,20 +78,16 @@ export async function saveNoteAction(
         {
           onConflict: "enrollment_id",
         }
-      )
-      .select();
-
-    console.log('[Save Note] Result:', { data, error });
+      );
 
     if (error) {
       console.error("Error saving note:", error);
       return { success: false, error: error.message };
     }
 
-    // No need to revalidate as we're using optimistic UI
     return { success: true };
   } catch (error) {
-    console.error("Error saving note (catch):", error);
+    console.error("Error saving note:", error);
     return { success: false, error: "Unknown error" };
   }
 }
@@ -126,6 +120,38 @@ export async function deleteNoteAction(
     return { success: true };
   } catch (error) {
     console.error("Error deleting note:", error);
+    return { success: false, error: "Unknown error" };
+  }
+}
+
+export async function deleteEnrollmentAction(enrollmentId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    // Delete enrollment (cascade will delete related completed_items and learning_notes)
+    const { error } = await supabase
+      .from("enrollments")
+      .delete()
+      .eq("id", enrollmentId)
+      .eq("user_id", user.id); // Ensure user can only delete their own enrollments
+
+    if (error) {
+      console.error("Error deleting enrollment:", error);
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/my-learning");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting enrollment:", error);
     return { success: false, error: "Unknown error" };
   }
 }

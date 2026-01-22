@@ -25,7 +25,6 @@ export function NoteEditor({
   // Update content when initialContent changes (e.g., after data fetch)
   useEffect(() => {
     if (initialContent && content === "") {
-      console.log('[Note Editor] Loading initial content:', { enrollmentId, contentLength: initialContent.length });
       setContent(initialContent);
     }
   }, [initialContent, enrollmentId]);
@@ -40,14 +39,10 @@ export function NoteEditor({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      console.log('[Note Editor] Saving note...', { enrollmentId, contentLength: content.length });
-
       const result = await saveNoteAction(
         enrollmentId,
         content
       );
-
-      console.log('[Note Editor] Save result:', result);
 
       if (result.success) {
         setLastSaved(new Date());
@@ -56,11 +51,9 @@ export function NoteEditor({
       } else {
         const errorMessage = result.error || "알 수 없는 오류";
         toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
-        console.error('[Note Editor] Save failed:', result.error);
       }
     } catch (error) {
-      console.error('[Note Editor] Exception:', error);
-      toast.error(`노트 저장 중 오류가 발생했습니다: ${error}`);
+      toast.error("노트 저장 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
     }
