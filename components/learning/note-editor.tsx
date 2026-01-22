@@ -20,6 +20,15 @@ export function NoteEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  // Update content when initialContent changes (e.g., after data fetch)
+  // Only update if we haven't modified the content yet
+  useEffect(() => {
+    if (initialContent && content === "") {
+      console.log('[Note Editor] Loading initial content:', { enrollmentId, contentLength: initialContent.length });
+      setContent(initialContent);
+    }
+  }, [initialContent, enrollmentId]);
+
   // Debounced save function
   useEffect(() => {
     // Don't save on initial render if content hasn't changed
