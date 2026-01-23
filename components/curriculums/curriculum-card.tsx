@@ -25,6 +25,7 @@ const categoryLabels: Record<string, string> = {
   "research": "리서치 및 방법론",
   "ui-design": "UI 디자인",
   "ux-design": "UX 설계",
+  "prototyping": "프로토타이핑",
   "design-system": "디자인 시스템",
   "design-principle": "디자인 원칙 및 철학",
   "collaboration": "협업과 소프트스킬",
@@ -47,6 +48,9 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
               src={curriculum.thumbnail_url}
               alt={curriculum.title}
               fill
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgZmlsbD0iI2VlZSIvPjwvc3ZnPg=="
               className="object-cover transition-opacity group-hover:opacity-80"
             />
           ) : (

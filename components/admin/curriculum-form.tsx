@@ -35,6 +35,7 @@ const CATEGORIES = [
   { id: "research", label: "리서치 및 방법론" },
   { id: "ui-design", label: "UI 디자인" },
   { id: "ux-design", label: "UX 설계" },
+  { id: "prototyping", label: "프로토타이핑" },
   { id: "design-system", label: "디자인 시스템" },
   { id: "design-principle", label: "디자인 원칙 및 철학" },
   { id: "collaboration", label: "협업과 소프트스킬" },
