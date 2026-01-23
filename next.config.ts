@@ -51,6 +51,22 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'velog.io',
       },
+      {
+        protocol: 'https',
+        hostname: 'source.inblog.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.hwahae.co.kr',
+      },
+      {
+        protocol: 'https',
+        hostname: 'substackcdn.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.substack.com',
+      },
     ],
   },
 };
