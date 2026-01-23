@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createArticleAction, updateArticleAction } from "./actions";
 import { toast } from "sonner";
 
@@ -18,7 +19,18 @@ interface Article {
   thumbnail_url: string | null;
   author: string | null;
   published_at: string | null;
+  category: string | null;
 }
+
+const CATEGORIES = [
+  { id: "research", label: "리서치 및 방법론" },
+  { id: "ui-design", label: "UI 디자인" },
+  { id: "ux-design", label: "UX 설계" },
+  { id: "design-system", label: "디자인 시스템" },
+  { id: "design-principle", label: "디자인 원칙 및 철학" },
+  { id: "collaboration", label: "협업과 소프트스킬" },
+  { id: "career", label: "디자인 커리어" },
+];
 
 interface ArticleFormProps {
   article?: Article;
@@ -28,6 +40,7 @@ interface ArticleFormProps {
 export function ArticleForm({ article, mode }: ArticleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [category, setCategory] = useState<string>(article?.category || "");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,6 +54,7 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
       thumbnail_url: formData.get("thumbnail_url") as string,
       author: formData.get("author") as string,
       published_at: formData.get("published_at") as string,
+      category: category || null,
     };
 
     try {
@@ -132,6 +146,22 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
               defaultValue={article?.author || ""}
               placeholder="저자명을 입력하세요"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">카테고리</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="카테고리를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

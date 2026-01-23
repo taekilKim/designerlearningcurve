@@ -23,6 +23,7 @@ interface Curriculum {
   description: string | null;
   difficulty: "beginner" | "intermediate" | "advanced";
   estimated_hours: number | null;
+  category: string | null;
 }
 
 interface CurriculumFormProps {
@@ -30,12 +31,23 @@ interface CurriculumFormProps {
   mode: "create" | "edit";
 }
 
+const CATEGORIES = [
+  { id: "research", label: "리서치 및 방법론" },
+  { id: "ui-design", label: "UI 디자인" },
+  { id: "ux-design", label: "UX 설계" },
+  { id: "design-system", label: "디자인 시스템" },
+  { id: "design-principle", label: "디자인 원칙 및 철학" },
+  { id: "collaboration", label: "협업과 소프트스킬" },
+  { id: "career", label: "디자인 커리어" },
+];
+
 export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [difficulty, setDifficulty] = useState<
     "beginner" | "intermediate" | "advanced"
   >(curriculum?.difficulty || "beginner");
+  const [category, setCategory] = useState<string>(curriculum?.category || "");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,6 +58,7 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
       title: formData.get("title") as string,
       description: formData.get("description") as string,
       difficulty,
+      category: category || null,
       estimated_hours: formData.get("estimated_hours")
         ? parseInt(formData.get("estimated_hours") as string)
         : undefined,
@@ -130,6 +143,22 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
                 <SelectItem value="beginner">초급</SelectItem>
                 <SelectItem value="intermediate">중급</SelectItem>
                 <SelectItem value="advanced">고급</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">카테고리</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="카테고리를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

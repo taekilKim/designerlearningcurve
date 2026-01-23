@@ -13,6 +13,7 @@ export async function createArticleAction(formData: {
   thumbnail_url?: string;
   author?: string;
   published_at?: string;
+  category?: string | null;
 }) {
   // Check admin status
   const adminStatus = await isAdmin();
@@ -29,6 +30,7 @@ export async function createArticleAction(formData: {
     thumbnail_url: formData.thumbnail_url || null,
     author: formData.author || null,
     published_at: formData.published_at || null,
+    category: formData.category || null,
   });
 
   if (error) {
@@ -50,6 +52,7 @@ export async function updateArticleAction(
     thumbnail_url?: string;
     author?: string;
     published_at?: string;
+    category?: string | null;
   }
 ) {
   // Check admin status
@@ -69,6 +72,7 @@ export async function updateArticleAction(
       thumbnail_url: formData.thumbnail_url || null,
       author: formData.author || null,
       published_at: formData.published_at || null,
+      category: formData.category || null,
     })
     .eq("id", id);
 
@@ -111,6 +115,7 @@ export async function createCurriculumAction(formData: {
   description?: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   estimated_hours?: number;
+  category?: string | null;
 }) {
   // Check admin status
   const adminStatus = await isAdmin();
@@ -127,6 +132,7 @@ export async function createCurriculumAction(formData: {
       description: formData.description || null,
       difficulty: formData.difficulty,
       estimated_hours: formData.estimated_hours || null,
+      category: formData.category || null,
     })
     .select()
     .single();
@@ -148,6 +154,7 @@ export async function updateCurriculumAction(
     description?: string;
     difficulty: "beginner" | "intermediate" | "advanced";
     estimated_hours?: number;
+    category?: string | null;
   }
 ) {
   // Check admin status
@@ -165,6 +172,7 @@ export async function updateCurriculumAction(
       description: formData.description || null,
       difficulty: formData.difficulty,
       estimated_hours: formData.estimated_hours || null,
+      category: formData.category || null,
     })
     .eq("id", id);
 
