@@ -67,7 +67,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
     setUpdatingCategory(articleId);
     try {
       const result = await updateArticleAction(articleId, {
-        category: newCategory,
+        category: newCategory === "none" ? null : newCategory,
       });
 
       if (result.success) {
@@ -160,7 +160,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Select
-                      value={article.category || ""}
+                      value={article.category || "none"}
                       onValueChange={(value) => handleCategoryChange(article.id, value)}
                       disabled={updatingCategory === article.id}
                     >
@@ -168,7 +168,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
                         <SelectValue placeholder="카테고리 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">없음</SelectItem>
+                        <SelectItem value="none">없음</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.name}>
                             {category.icon} {category.label}

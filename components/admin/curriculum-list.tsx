@@ -73,7 +73,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
     setUpdatingId(curriculumId);
     try {
       const result = await updateCurriculumAction(curriculumId, {
-        category: newCategory,
+        category: newCategory === "none" ? null : newCategory,
       });
 
       if (result.success) {
@@ -214,7 +214,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Select
-                        value={curriculum.category || ""}
+                        value={curriculum.category || "none"}
                         onValueChange={(value) => handleCategoryChange(curriculum.id, value)}
                         disabled={updatingId === curriculum.id}
                       >
@@ -222,7 +222,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
                           <SelectValue placeholder="카테고리 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">없음</SelectItem>
+                          <SelectItem value="none">없음</SelectItem>
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.name}>
                               {category.icon} {category.label}
