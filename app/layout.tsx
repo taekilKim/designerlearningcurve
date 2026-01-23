@@ -3,6 +3,7 @@ import "./globals.css";
 import { GNB } from "@/components/shared/gnb";
 import { BottomNav } from "@/components/shared/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
+import { PreventZoom } from "@/components/shared/prevent-zoom";
 
 export const metadata: Metadata = {
   title: "Designer Learning Curve",
@@ -29,6 +30,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <PreventZoom />
         <GNB />
         <main className="min-h-screen pb-16 md:pb-0">{children}</main>
         <BottomNav />
