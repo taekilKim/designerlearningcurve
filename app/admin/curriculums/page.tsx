@@ -7,16 +7,26 @@ import { CurriculumList } from "@/components/admin/curriculum-list";
 export default async function CurriculumsPage() {
   const supabase = await createClient();
 
-  const { data: curriculums, error } = await supabase
-    .from("curriculums")
-    .select(`
-      *,
-      curriculum_items(count)
-    `)
-    .order("created_at", { ascending: false });
+  const [
+    { data: curriculums, error: curriculumsError },
+    { data: categories }
+  ] = await Promise.all([
+    supabase
+      .from("curriculums")
+      .select(`
+        *,
+        curriculum_items(count)
+      `)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_curriculums", true)
+      .order("display_order", { ascending: true })
+  ]);
 
-  if (error) {
-    console.error("Error fetching curriculums:", error);
+  if (curriculumsError) {
+    console.error("Error fetching curriculums:", curriculumsError);
   }
 
   return (
@@ -37,7 +47,7 @@ export default async function CurriculumsPage() {
       </div>
 
       {curriculums && curriculums.length > 0 ? (
-        <CurriculumList curriculums={curriculums} />
+        <CurriculumList curriculums={curriculums} categories={categories || []} />
       ) : (
         <div className="text-center py-12 border rounded-lg">
           <p className="text-muted-foreground mb-4">

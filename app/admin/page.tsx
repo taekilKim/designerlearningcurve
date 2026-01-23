@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, BookOpen, Users } from "lucide-react";
+import { FileText, BookOpen, Users, FolderOpen } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -70,24 +71,48 @@ export default async function AdminDashboard() {
 
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-4">시작하기</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle>아티클 관리</CardTitle>
-              <CardDescription>
-                새로운 아티클을 추가하거나 기존 아티클을 수정하세요
-              </CardDescription>
-            </CardHeader>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link href="/admin/articles">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  아티클 관리
+                </CardTitle>
+                <CardDescription>
+                  새로운 아티클을 추가하거나 기존 아티클을 수정하세요
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle>커리큘럼 관리</CardTitle>
-              <CardDescription>
-                학습 경로를 생성하고 아티클을 연결하세요
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <Link href="/admin/curriculums">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  커리큘럼 관리
+                </CardTitle>
+                <CardDescription>
+                  학습 경로를 생성하고 아티클을 연결하세요
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/admin/categories">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  카테고리 관리
+                </CardTitle>
+                <CardDescription>
+                  아티클 및 커리큘럼 카테고리를 관리하세요
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>

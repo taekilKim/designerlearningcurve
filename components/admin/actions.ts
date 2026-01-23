@@ -534,3 +534,202 @@ export async function loadMoreCurriculumsAction(
 
   return { success: true, curriculums: curriculums || [] };
 }
+
+// Category Management
+
+export async function getCategoriesAction(filter?: {
+  forArticles?: boolean;
+  forCurriculums?: boolean;
+}) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("categories")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  if (filter?.forArticles !== undefined) {
+    query = query.eq("for_articles", filter.forArticles);
+  }
+
+  if (filter?.forCurriculums !== undefined) {
+    query = query.eq("for_curriculums", filter.forCurriculums);
+  }
+
+  const { data: categories, error } = await query;
+
+  if (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, error: error.message, categories: [] };
+  }
+
+  return { success: true, categories: categories || [] };
+}
+
+export async function createCategoryAction(data: {
+  name: string;
+  label: string;
+  icon: string;
+  forArticles: boolean;
+  forCurriculums: boolean;
+}) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    return { success: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  // Get max display_order
+  const { data: maxOrder } = await supabase
+    .from("categories")
+    .select("display_order")
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .single();
+
+  const displayOrder = (maxOrder?.display_order || 0) + 1;
+
+  const { data: category, error } = await supabase
+    .from("categories")
+    .insert({
+      name: data.name,
+      label: data.label,
+      icon: data.icon,
+      for_articles: data.forArticles,
+      for_curriculums: data.forCurriculums,
+      display_order: displayOrder,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating category:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/curriculums");
+
+  return { success: true, category };
+}
+
+export async function updateCategoryAction(
+  id: string,
+  data: {
+    name?: string;
+    label?: string;
+    icon?: string;
+    forArticles?: boolean;
+    forCurriculums?: boolean;
+  }
+) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    return { success: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.label !== undefined) updateData.label = data.label;
+  if (data.icon !== undefined) updateData.icon = data.icon;
+  if (data.forArticles !== undefined)
+    updateData.for_articles = data.forArticles;
+  if (data.forCurriculums !== undefined)
+    updateData.for_curriculums = data.forCurriculums;
+
+  const { data: category, error } = await supabase
+    .from("categories")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating category:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/curriculums");
+
+  return { success: true, category };
+}
+
+export async function deleteCategoryAction(id: string) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    return { success: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  // Check if category is in use
+  const { data: articlesCount } = await supabase
+    .from("articles")
+    .select("id", { count: "exact", head: true })
+    .eq("category", id);
+
+  const { data: curriculumsCount } = await supabase
+    .from("curriculums")
+    .select("id", { count: "exact", head: true })
+    .eq("category", id);
+
+  if (
+    (articlesCount && articlesCount.length > 0) ||
+    (curriculumsCount && curriculumsCount.length > 0)
+  ) {
+    return {
+      success: false,
+      error: "이 카테고리를 사용 중인 아티클 또는 커리큘럼이 있습니다.",
+    };
+  }
+
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting category:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/curriculums");
+
+  return { success: true };
+}
+
+export async function reorderCategoriesAction(categoryIds: string[]) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    return { success: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  // Update display_order for each category
+  const updates = categoryIds.map((id, index) =>
+    supabase
+      .from("categories")
+      .update({ display_order: index + 1 })
+      .eq("id", id)
+  );
+
+  const results = await Promise.all(updates);
+
+  const errors = results.filter((r) => r.error);
+  if (errors.length > 0) {
+    console.error("Error reordering categories:", errors);
+    return { success: false, error: "카테고리 순서 변경에 실패했습니다." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/curriculums");
+
+  return { success: true };
+}
