@@ -68,6 +68,116 @@ export async function extractMetadataAction(url: string) {
   }
 }
 
+// Bulk Metadata Update
+
+export async function bulkUpdateArticlesMetadataAction() {
+  // Check admin status
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    return { success: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    // Fetch all articles
+    const { data: articles, error: fetchError } = await supabase
+      .from("articles")
+      .select("id, url, title, description, thumbnail_url, author");
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message };
+    }
+
+    if (!articles || articles.length === 0) {
+      return { success: true, updated: 0, skipped: 0, failed: 0 };
+    }
+
+    let updated = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    // Process each article
+    for (const article of articles) {
+      try {
+        // Skip if article has no URL
+        if (!article.url) {
+          skipped++;
+          continue;
+        }
+
+        // Extract metadata
+        const metadataResult = await extractMetadataAction(article.url);
+
+        if (!metadataResult.success || !metadataResult.data) {
+          failed++;
+          continue;
+        }
+
+        const { data: metadata } = metadataResult;
+
+        // Prepare update data (only update empty fields)
+        const updateData: any = {};
+
+        if (!article.title && metadata.title) {
+          updateData.title = metadata.title;
+        }
+        if (!article.description && metadata.description) {
+          updateData.description = metadata.description;
+        }
+        if (!article.thumbnail_url && metadata.thumbnail_url) {
+          updateData.thumbnail_url = metadata.thumbnail_url;
+        }
+        if (!article.author && metadata.author) {
+          updateData.author = metadata.author;
+        }
+
+        // Skip if nothing to update
+        if (Object.keys(updateData).length === 0) {
+          skipped++;
+          continue;
+        }
+
+        // Update article
+        const { error: updateError } = await supabase
+          .from("articles")
+          .update(updateData)
+          .eq("id", article.id);
+
+        if (updateError) {
+          console.error(`Failed to update article ${article.id}:`, updateError);
+          failed++;
+        } else {
+          updated++;
+        }
+
+        // Add small delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error processing article ${article.id}:`, error);
+        failed++;
+      }
+    }
+
+    revalidatePath("/admin/articles");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      updated,
+      skipped,
+      failed,
+      total: articles.length,
+    };
+  } catch (error) {
+    console.error("Error in bulk update:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "일괄 업데이트 실패",
+    };
+  }
+}
+
 // Article Actions
 
 export async function createArticleAction(formData: {
