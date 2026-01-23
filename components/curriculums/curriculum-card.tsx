@@ -21,17 +21,6 @@ const difficultyLabels = {
   advanced: "고급",
 };
 
-const categoryLabels: Record<string, string> = {
-  "research": "리서치 및 방법론",
-  "ui-design": "UI 디자인",
-  "ux-design": "UX 설계",
-  "prototyping": "프로토타이핑",
-  "design-system": "디자인 시스템",
-  "design-principle": "디자인 원칙 및 철학",
-  "collaboration": "협업과 소프트스킬",
-  "career": "디자인 커리어",
-};
-
 export function CurriculumCard({ curriculum }: CurriculumCardProps) {
   const articleCount = curriculum.curriculum_items?.[0]?.count || 0;
 
@@ -66,7 +55,7 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
           <div className="flex items-center gap-2">
             {curriculum.category && (
               <Badge variant="secondary" className="text-xs">
-                {categoryLabels[curriculum.category] || curriculum.category}
+                {curriculum.category}
               </Badge>
             )}
             {curriculum.difficulty && (

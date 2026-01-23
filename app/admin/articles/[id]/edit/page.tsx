@@ -12,13 +12,19 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: article, error } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [
+    { data: article, error: articleError },
+    { data: categories }
+  ] = await Promise.all([
+    supabase.from("articles").select("*").eq("id", id).single(),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_articles", true)
+      .order("display_order", { ascending: true })
+  ]);
 
-  if (error || !article) {
+  if (articleError || !article) {
     notFound();
   }
 
@@ -31,7 +37,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
         </p>
       </div>
 
-      <ArticleForm article={article} mode="edit" />
+      <ArticleForm article={article} mode="edit" categories={categories || []} />
     </div>
   );
 }

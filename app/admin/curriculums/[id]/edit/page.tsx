@@ -16,40 +16,41 @@ export default async function EditCurriculumPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  // Fetch curriculum
-  const { data: curriculum, error: curriculumError } = await supabase
-    .from("curriculums")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [
+    { data: curriculum, error: curriculumError },
+    { data: curriculumItems, error: itemsError },
+    { data: allArticles, error: articlesError },
+    { data: categories }
+  ] = await Promise.all([
+    supabase.from("curriculums").select("*").eq("id", id).single(),
+    supabase
+      .from("curriculum_items")
+      .select(`
+        *,
+        articles (
+          id,
+          title,
+          description,
+          url,
+          author
+        )
+      `)
+      .eq("curriculum_id", id)
+      .order("sequence", { ascending: true }),
+    supabase
+      .from("articles")
+      .select("id, title, author")
+      .order("title", { ascending: true }),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_curriculums", true)
+      .order("display_order", { ascending: true })
+  ]);
 
   if (curriculumError || !curriculum) {
     notFound();
   }
-
-  // Fetch curriculum items with article details
-  const { data: curriculumItems, error: itemsError } = await supabase
-    .from("curriculum_items")
-    .select(
-      `
-      *,
-      articles (
-        id,
-        title,
-        description,
-        url,
-        author
-      )
-    `
-    )
-    .eq("curriculum_id", id)
-    .order("sequence", { ascending: true });
-
-  // Fetch all articles for adding new items
-  const { data: allArticles, error: articlesError } = await supabase
-    .from("articles")
-    .select("id, title, author")
-    .order("title", { ascending: true });
 
   return (
     <div>
@@ -61,7 +62,7 @@ export default async function EditCurriculumPage({
       </div>
 
       <div className="space-y-8">
-        <CurriculumForm curriculum={curriculum} mode="edit" />
+        <CurriculumForm curriculum={curriculum} mode="edit" categories={categories || []} />
 
         <Separator />
 

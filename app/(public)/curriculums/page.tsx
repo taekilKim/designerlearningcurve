@@ -14,7 +14,8 @@ export default async function CurriculumsPage({
   const supabase = await createClient();
   const { category } = await searchParams;
 
-  let query = supabase
+  // Build curriculum query
+  let curriculumsQuery = supabase
     .from("curriculums")
     .select(`
       *,
@@ -23,15 +24,25 @@ export default async function CurriculumsPage({
     .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
 
-  // Filter by category if specified
   if (category) {
-    query = query.eq("category", category);
+    curriculumsQuery = curriculumsQuery.eq("category", category);
   }
 
-  const { data: curriculums, error } = await query;
+  // Fetch curriculums and categories in parallel
+  const [
+    { data: curriculums, error: curriculumsError },
+    { data: categories }
+  ] = await Promise.all([
+    curriculumsQuery,
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_curriculums", true)
+      .order("display_order", { ascending: true })
+  ]);
 
-  if (error) {
-    console.error("Error fetching curriculums:", error);
+  if (curriculumsError) {
+    console.error("Error fetching curriculums:", curriculumsError);
   }
 
   return (
@@ -39,7 +50,7 @@ export default async function CurriculumsPage({
       <div className="max-w-[1600px] mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}
-          <CategorySidebar type="curriculums" />
+          <CategorySidebar type="curriculums" categories={categories || []} />
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
@@ -54,6 +65,7 @@ export default async function CurriculumsPage({
             <CurriculumListInfinite
               initialCurriculums={curriculums || []}
               category={category}
+              categories={categories || []}
             />
           </div>
         </div>

@@ -14,21 +14,32 @@ export default async function Home({
   const supabase = await createClient();
   const { category } = await searchParams;
 
-  let query = supabase
+  // Build article query
+  let articlesQuery = supabase
     .from("articles")
     .select("*")
     .order("published_at", { ascending: false })
     .limit(PAGE_SIZE);
 
-  // Filter by category if specified
   if (category) {
-    query = query.eq("category", category);
+    articlesQuery = articlesQuery.eq("category", category);
   }
 
-  const { data: articles, error } = await query;
+  // Fetch articles and categories in parallel
+  const [
+    { data: articles, error: articlesError },
+    { data: categories }
+  ] = await Promise.all([
+    articlesQuery,
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_articles", true)
+      .order("display_order", { ascending: true })
+  ]);
 
-  if (error) {
-    console.error("Error fetching articles:", error);
+  if (articlesError) {
+    console.error("Error fetching articles:", articlesError);
   }
 
   return (
@@ -36,7 +47,7 @@ export default async function Home({
       <div className="max-w-[1600px] mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}
-          <CategorySidebar type="articles" />
+          <CategorySidebar type="articles" categories={categories || []} />
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
@@ -51,6 +62,7 @@ export default async function Home({
             <ArticleListInfinite
               initialArticles={articles || []}
               category={category}
+              categories={categories || []}
             />
           </div>
         </div>

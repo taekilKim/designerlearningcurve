@@ -19,17 +19,6 @@ interface ArticleCardProps {
   article: Article;
 }
 
-const categoryLabels: Record<string, string> = {
-  "research": "리서치 및 방법론",
-  "ui-design": "UI 디자인",
-  "ux-design": "UX 설계",
-  "prototyping": "프로토타이핑",
-  "design-system": "디자인 시스템",
-  "design-principle": "디자인 원칙 및 철학",
-  "collaboration": "협업과 소프트스킬",
-  "career": "디자인 커리어",
-};
-
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <a
@@ -67,7 +56,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           {article.category && (
             <div>
               <Badge variant="secondary" className="text-xs">
-                {categoryLabels[article.category] || article.category}
+                {article.category}
               </Badge>
             </div>
           )}

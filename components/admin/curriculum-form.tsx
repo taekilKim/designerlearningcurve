@@ -26,23 +26,20 @@ interface Curriculum {
   category: string | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  label: string;
+  icon: string;
+}
+
 interface CurriculumFormProps {
   curriculum?: Curriculum;
   mode: "create" | "edit";
+  categories: Category[];
 }
 
-const CATEGORIES = [
-  { id: "research", label: "리서치 및 방법론" },
-  { id: "ui-design", label: "UI 디자인" },
-  { id: "ux-design", label: "UX 설계" },
-  { id: "prototyping", label: "프로토타이핑" },
-  { id: "design-system", label: "디자인 시스템" },
-  { id: "design-principle", label: "디자인 원칙 및 철학" },
-  { id: "collaboration", label: "협업과 소프트스킬" },
-  { id: "career", label: "디자인 커리어" },
-];
-
-export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
+export function CurriculumForm({ curriculum, mode, categories }: CurriculumFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [difficulty, setDifficulty] = useState<
@@ -155,9 +152,9 @@ export function CurriculumForm({ curriculum, mode }: CurriculumFormProps) {
                 <SelectValue placeholder="카테고리를 선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.icon} {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -23,23 +23,20 @@ interface Article {
   category: string | null;
 }
 
-const CATEGORIES = [
-  { id: "research", label: "리서치 및 방법론" },
-  { id: "ui-design", label: "UI 디자인" },
-  { id: "ux-design", label: "UX 설계" },
-  { id: "prototyping", label: "프로토타이핑" },
-  { id: "design-system", label: "디자인 시스템" },
-  { id: "design-principle", label: "디자인 원칙 및 철학" },
-  { id: "collaboration", label: "협업과 소프트스킬" },
-  { id: "career", label: "디자인 커리어" },
-];
+interface Category {
+  id: string;
+  name: string;
+  label: string;
+  icon: string;
+}
 
 interface ArticleFormProps {
   article?: Article;
   mode: "create" | "edit";
+  categories: Category[];
 }
 
-export function ArticleForm({ article, mode }: ArticleFormProps) {
+export function ArticleForm({ article, mode, categories }: ArticleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -224,9 +221,9 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
                 <SelectValue placeholder="카테고리를 선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.icon} {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>

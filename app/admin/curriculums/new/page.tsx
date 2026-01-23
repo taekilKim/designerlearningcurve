@@ -1,6 +1,14 @@
+import { createClient } from "@/lib/supabase/server";
 import { CurriculumForm } from "@/components/admin/curriculum-form";
 
-export default function NewCurriculumPage() {
+export default async function NewCurriculumPage() {
+  const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("for_curriculums", true)
+    .order("display_order", { ascending: true});
+
   return (
     <div>
       <div className="mb-8">
@@ -10,7 +18,7 @@ export default function NewCurriculumPage() {
         </p>
       </div>
 
-      <CurriculumForm mode="create" />
+      <CurriculumForm mode="create" categories={categories || []} />
     </div>
   );
 }

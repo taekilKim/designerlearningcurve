@@ -1,25 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const CATEGORIES = [
-  { id: "research", label: "리서치 및 방법론", icon: "🔍" },
-  { id: "ui-design", label: "UI 디자인", icon: "🎨" },
-  { id: "ux-design", label: "UX 설계", icon: "✏️" },
-  { id: "prototyping", label: "프로토타이핑", icon: "⚡" },
-  { id: "design-system", label: "디자인 시스템", icon: "🧩" },
-  { id: "design-principle", label: "디자인 원칙 및 철학", icon: "💡" },
-  { id: "collaboration", label: "협업과 소프트스킬", icon: "🤝" },
-  { id: "career", label: "디자인 커리어", icon: "🚀" },
-];
+interface Category {
+  id: string;
+  name: string;
+  label: string;
+  icon: string;
+  for_articles: boolean;
+  for_curriculums: boolean;
+  display_order: number;
+}
 
 interface CategorySidebarProps {
   type: "articles" | "curriculums";
+  categories: Category[];
 }
 
-export function CategorySidebar({ type }: CategorySidebarProps) {
+export function CategorySidebar({ type, categories }: CategorySidebarProps) {
   const pathname = usePathname();
   const basePath = type === "articles" ? "/" : "/curriculums";
 
@@ -45,12 +44,12 @@ export function CategorySidebar({ type }: CategorySidebarProps) {
             </h3>
           </div>
 
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.id}
-              href={`${basePath}?category=${category.id}`}
+              href={`${basePath}?category=${category.name}`}
               className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
-                pathname.includes(category.id)
+                pathname.includes(category.name)
                   ? "bg-secondary text-secondary-foreground font-medium"
                   : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
               }`}
