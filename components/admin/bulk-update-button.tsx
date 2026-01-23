@@ -31,10 +31,17 @@ export function BulkUpdateButton() {
       if (result.success) {
         const { updated = 0, skipped = 0, failed = 0, total = 0 } = result;
 
-        toast.success(
-          `일괄 업데이트 완료!\n업데이트: ${updated}개\n건너뜀: ${skipped}개\n실패: ${failed}개\n전체: ${total}개`,
-          { duration: 5000 }
-        );
+        toast.success("일괄 업데이트 완료!", {
+          description: (
+            <div className="text-sm space-y-1 mt-2">
+              <p>✅ 업데이트: {updated}개</p>
+              <p>⏭️ 건너뜀: {skipped}개</p>
+              {failed > 0 && <p>❌ 실패: {failed}개</p>}
+              <p className="font-semibold pt-1">전체: {total}개</p>
+            </div>
+          ),
+          duration: 6000,
+        });
 
         setIsOpen(false);
       } else {

@@ -11,6 +11,7 @@ export function GNB() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
@@ -29,9 +30,14 @@ export function GNB() {
             .eq("id", user.id)
             .single();
           setIsAdmin(profile?.is_admin === true);
+        } else {
+          setIsAdmin(false);
         }
       } catch (error) {
         console.error("[GNB] Failed to fetch user:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -112,7 +118,7 @@ export function GNB() {
                 내 학습
               </Link>
             )}
-            {isAdmin && (
+            {!isLoading && isAdmin && (
               <Link
                 href="/admin"
                 className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
