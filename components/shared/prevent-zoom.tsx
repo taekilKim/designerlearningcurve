@@ -21,10 +21,31 @@ export function PreventZoom() {
       lastTouchEnd = now;
     };
 
+    // Prevent wheel/trackpad zoom (Ctrl+Wheel on Chrome)
+    const preventWheelZoom = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    // Prevent keyboard zoom (Ctrl +/-)
+    const preventKeyboardZoom = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "+" || e.key === "-" || e.key === "=")
+      ) {
+        e.preventDefault();
+      }
+    };
+
     // Add event listeners
     document.addEventListener("touchstart", preventZoom, { passive: false });
     document.addEventListener("touchmove", preventZoom, { passive: false });
     document.addEventListener("touchend", preventDoubleTapZoom, {
+      passive: false,
+    });
+    document.addEventListener("wheel", preventWheelZoom, { passive: false });
+    document.addEventListener("keydown", preventKeyboardZoom, {
       passive: false,
     });
 
@@ -33,6 +54,8 @@ export function PreventZoom() {
       document.removeEventListener("touchstart", preventZoom);
       document.removeEventListener("touchmove", preventZoom);
       document.removeEventListener("touchend", preventDoubleTapZoom);
+      document.removeEventListener("wheel", preventWheelZoom);
+      document.removeEventListener("keydown", preventKeyboardZoom);
     };
   }, []);
 
