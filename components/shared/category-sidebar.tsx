@@ -28,7 +28,7 @@ export function CategorySidebar({ type }: CategorySidebarProps) {
         <nav className="space-y-1">
           <Link
             href={basePath}
-            className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
+            className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
               pathname === basePath
                 ? "bg-secondary text-secondary-foreground font-medium"
                 : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
@@ -48,7 +48,7 @@ export function CategorySidebar({ type }: CategorySidebarProps) {
             <Link
               key={category.id}
               href={`${basePath}?category=${category.id}`}
-              className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
+              className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
                 pathname.includes(category.id)
                   ? "bg-secondary text-secondary-foreground font-medium"
                   : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"

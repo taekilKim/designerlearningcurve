@@ -85,14 +85,14 @@ export function GNB() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold">
+          <Link href="/" className="text-xl font-bold cursor-pointer">
             <span className="hidden md:inline">Designer Learning Curve</span>
             <span className="md:hidden">DLC</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/curriculums"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+              className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                 pathname?.startsWith("/curriculums")
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -103,7 +103,7 @@ export function GNB() {
             {user && (
               <Link
                 href="/my-learning"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/my-learning")
                     ? "text-foreground"
                     : "text-muted-foreground"
@@ -115,7 +115,7 @@ export function GNB() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/admin")
                     ? "text-foreground"
                     : "text-muted-foreground"

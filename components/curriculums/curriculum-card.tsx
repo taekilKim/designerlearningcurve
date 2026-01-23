@@ -37,7 +37,7 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
   return (
     <Link
       href={`/curriculums/${curriculum.id}`}
-      className="group block"
+      className="group block cursor-pointer"
     >
       <article className="rounded-lg overflow-hidden transition-all hover:bg-muted/30">
         {/* Thumbnail */}
