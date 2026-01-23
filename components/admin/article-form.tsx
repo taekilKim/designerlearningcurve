@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createArticleAction, updateArticleAction } from "./actions";
+import { createArticleAction, updateArticleAction, extractMetadataAction } from "./actions";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 
 interface Article {
   id: string;
@@ -40,20 +41,66 @@ interface ArticleFormProps {
 export function ArticleForm({ article, mode }: ArticleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState(article?.title || "");
+  const [description, setDescription] = useState(article?.description || "");
+  const [url, setUrl] = useState(article?.url || "");
+  const [thumbnailUrl, setThumbnailUrl] = useState(article?.thumbnail_url || "");
+  const [author, setAuthor] = useState(article?.author || "");
+  const [publishedAt, setPublishedAt] = useState(
+    article?.published_at
+      ? new Date(article.published_at).toISOString().split("T")[0]
+      : ""
+  );
   const [category, setCategory] = useState<string>(article?.category || "");
+
+  const handleExtractMetadata = async () => {
+    if (!url) {
+      toast.error("URL을 먼저 입력해주세요.");
+      return;
+    }
+
+    setIsExtracting(true);
+    try {
+      const result = await extractMetadataAction(url);
+      if (result.success && result.data) {
+        // Auto-fill form fields with extracted metadata
+        if (result.data.title && !title) {
+          setTitle(result.data.title);
+        }
+        if (result.data.description && !description) {
+          setDescription(result.data.description);
+        }
+        if (result.data.thumbnail_url) {
+          setThumbnailUrl(result.data.thumbnail_url);
+        }
+        if (result.data.author && !author) {
+          setAuthor(result.data.author);
+        }
+        toast.success("메타데이터를 성공적으로 추출했습니다.");
+      } else {
+        toast.error(result.error || "메타데이터 추출에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("메타데이터 추출 중 오류가 발생했습니다.");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
     const data = {
-      title: formData.get("title") as string,
-      description: formData.get("description") as string,
-      url: formData.get("url") as string,
-      thumbnail_url: formData.get("thumbnail_url") as string,
-      author: formData.get("author") as string,
-      published_at: formData.get("published_at") as string,
+      title,
+      description,
+      url,
+      thumbnail_url: thumbnailUrl,
+      author,
+      published_at: publishedAt,
       category: category || null,
     };
 
@@ -90,13 +137,45 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="url">
+              URL <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="url"
+                name="url"
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+                placeholder="https://example.com/article"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleExtractMetadata}
+                disabled={!url || isExtracting}
+                className="whitespace-nowrap"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isExtracting ? "추출 중..." : "자동 추출"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              URL을 입력한 후 자동 추출을 클릭하면 메타데이터를 자동으로 가져옵니다.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="title">
               제목 <span className="text-destructive">*</span>
             </Label>
             <Input
               id="title"
               name="title"
-              defaultValue={article?.title}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="아티클 제목을 입력하세요"
             />
@@ -107,23 +186,10 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
             <Textarea
               id="description"
               name="description"
-              defaultValue={article?.description || ""}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="아티클에 대한 간단한 설명을 입력하세요"
               rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="url">
-              URL <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="url"
-              name="url"
-              type="url"
-              defaultValue={article?.url}
-              required
-              placeholder="https://example.com/article"
             />
           </div>
 
@@ -133,7 +199,8 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
               id="thumbnail_url"
               name="thumbnail_url"
               type="url"
-              defaultValue={article?.thumbnail_url || ""}
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
             />
           </div>
@@ -143,7 +210,8 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
             <Input
               id="author"
               name="author"
-              defaultValue={article?.author || ""}
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
               placeholder="저자명을 입력하세요"
             />
           </div>
@@ -170,11 +238,8 @@ export function ArticleForm({ article, mode }: ArticleFormProps) {
               id="published_at"
               name="published_at"
               type="date"
-              defaultValue={
-                article?.published_at
-                  ? new Date(article.published_at).toISOString().split("T")[0]
-                  : ""
-              }
+              value={publishedAt}
+              onChange={(e) => setPublishedAt(e.target.value)}
             />
           </div>
 

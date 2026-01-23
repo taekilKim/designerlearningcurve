@@ -3,6 +3,70 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
+import * as cheerio from "cheerio";
+
+// Metadata Extraction
+
+export async function extractMetadataAction(url: string) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; MetadataBot/1.0)",
+      },
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `HTTP 오류: ${response.status}`,
+      };
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Extract og:image, og:title, og:description
+    const ogImage =
+      $('meta[property="og:image"]').attr("content") ||
+      $('meta[name="og:image"]').attr("content") ||
+      $('meta[property="twitter:image"]').attr("content") ||
+      $('meta[name="twitter:image"]').attr("content") ||
+      "";
+
+    const ogTitle =
+      $('meta[property="og:title"]').attr("content") ||
+      $('meta[name="og:title"]').attr("content") ||
+      $("title").text() ||
+      "";
+
+    const ogDescription =
+      $('meta[property="og:description"]').attr("content") ||
+      $('meta[name="og:description"]').attr("content") ||
+      $('meta[name="description"]').attr("content") ||
+      "";
+
+    const ogAuthor =
+      $('meta[property="og:site_name"]').attr("content") ||
+      $('meta[name="author"]').attr("content") ||
+      "";
+
+    return {
+      success: true,
+      data: {
+        title: ogTitle.trim(),
+        description: ogDescription.trim(),
+        thumbnail_url: ogImage.trim(),
+        author: ogAuthor.trim(),
+      },
+    };
+  } catch (error) {
+    console.error("Error extracting metadata:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "메타데이터 추출 실패",
+    };
+  }
+}
 
 // Article Actions
 
