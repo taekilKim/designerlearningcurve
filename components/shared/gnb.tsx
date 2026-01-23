@@ -63,8 +63,13 @@ export function GNB() {
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+    try {
+      await supabase.auth.signOut();
+      // Force reload to clear all state
+      window.location.replace("/");
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   const handleSignIn = async () => {
