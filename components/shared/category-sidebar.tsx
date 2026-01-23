@@ -20,7 +20,7 @@ interface CategorySidebarProps {
 
 export function CategorySidebar({ type }: CategorySidebarProps) {
   const pathname = usePathname();
-  const basePath = type === "articles" ? "/articles" : "/curriculums";
+  const basePath = type === "articles" ? "/" : "/curriculums";
 
   return (
     <aside className="w-64 flex-shrink-0 pr-8 border-r border-border">

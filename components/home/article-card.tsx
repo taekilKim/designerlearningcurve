@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText } from "lucide-react";
 
 interface Article {
   id: string;
@@ -12,49 +12,82 @@ interface Article {
   thumbnail_url: string;
   author: string;
   published_at: string;
+  category?: string;
 }
 
 interface ArticleCardProps {
   article: Article;
 }
 
+const categoryLabels: Record<string, string> = {
+  "research": "리서치 및 방법론",
+  "ui-design": "UI 디자인",
+  "ux-design": "UX 설계",
+  "design-system": "디자인 시스템",
+  "design-principle": "디자인 원칙 및 철학",
+  "collaboration": "협업과 소프트스킬",
+  "career": "디자인 커리어",
+};
+
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
-    <Card
-      className="group cursor-pointer transition-all hover:shadow-lg overflow-hidden"
-      onClick={() => window.open(article.url, "_blank")}
+    <a
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block"
     >
-      {article.thumbnail_url && (
-        <div className="relative w-full h-48 overflow-hidden bg-muted">
-          <Image
-            src={article.thumbnail_url}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+      <article className="rounded-lg overflow-hidden transition-all hover:bg-muted/30">
+        {/* Thumbnail */}
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+          {article.thumbnail_url ? (
+            <Image
+              src={article.thumbnail_url}
+              alt={article.title}
+              fill
+              className="object-cover transition-opacity group-hover:opacity-80"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/15 group-hover:to-primary/10 transition-colors">
+              <FileText className="h-12 w-12 text-muted-foreground/40" />
+            </div>
+          )}
         </div>
-      )}
-      <CardHeader>
-        <CardTitle className="flex items-start justify-between gap-2">
-          <span className="line-clamp-2">{article.title}</span>
-          <ExternalLink className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        </CardTitle>
-        {article.description && (
-          <CardDescription className="line-clamp-2">
-            {article.description}
-          </CardDescription>
-        )}
-      </CardHeader>
-      {article.author && (
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            by {article.author}
-          </p>
-        </CardContent>
-      )}
-    </Card>
+
+        {/* Content */}
+        <div className="p-4 space-y-3">
+          {/* Category */}
+          {article.category && (
+            <div>
+              <Badge variant="secondary" className="text-xs">
+                {categoryLabels[article.category] || article.category}
+              </Badge>
+            </div>
+          )}
+
+          {/* Title */}
+          <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+            {article.title}
+          </h3>
+
+          {/* Description */}
+          {article.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {article.description}
+            </p>
+          )}
+
+          {/* Author */}
+          {article.author && (
+            <p className="text-xs text-muted-foreground">
+              {article.author}
+            </p>
+          )}
+        </div>
+      </article>
+    </a>
   );
 }
