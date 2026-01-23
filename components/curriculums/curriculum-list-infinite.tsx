@@ -9,7 +9,7 @@ interface Curriculum {
   id: string;
   title: string;
   description: string | null;
-  difficulty: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
   estimated_hours: number | null;
   thumbnail_url: string | null;
   category: string | null;

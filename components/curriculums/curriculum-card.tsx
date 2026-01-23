@@ -7,9 +7,9 @@ interface CurriculumCardProps {
   curriculum: {
     id: string;
     title: string;
-    description: string;
-    category?: string;
-    thumbnail_url?: string;
+    description: string | null;
+    category?: string | null;
+    thumbnail_url?: string | null;
     difficulty?: "beginner" | "intermediate" | "advanced";
     curriculum_items?: { count: number }[];
   };
@@ -79,7 +79,7 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
 
           {/* Description */}
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {curriculum.description}
+            {curriculum.description || "설명이 없습니다."}
           </p>
 
           {/* Meta */}

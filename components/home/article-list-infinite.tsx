@@ -8,10 +8,10 @@ import { Loader2 } from "lucide-react";
 interface Article {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   url: string;
-  thumbnail_url: string;
-  author: string;
+  thumbnail_url: string | null;
+  author: string | null;
   published_at: string;
   category?: string;
 }
