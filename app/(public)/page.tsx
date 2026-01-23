@@ -62,7 +62,6 @@ export default async function Home({
             <ArticleListInfinite
               initialArticles={articles || []}
               category={category}
-              categories={categories || []}
             />
           </div>
         </div>

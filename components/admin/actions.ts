@@ -220,9 +220,9 @@ export async function createArticleAction(formData: {
 export async function updateArticleAction(
   id: string,
   formData: {
-    title: string;
+    title?: string;
     description?: string;
-    url: string;
+    url?: string;
     thumbnail_url?: string;
     author?: string;
     published_at?: string;
@@ -237,17 +237,19 @@ export async function updateArticleAction(
 
   const supabase = await createClient();
 
+  // Build update object with only provided fields
+  const updateData: any = {};
+  if (formData.title !== undefined) updateData.title = formData.title;
+  if (formData.description !== undefined) updateData.description = formData.description || null;
+  if (formData.url !== undefined) updateData.url = formData.url;
+  if (formData.thumbnail_url !== undefined) updateData.thumbnail_url = formData.thumbnail_url || null;
+  if (formData.author !== undefined) updateData.author = formData.author || null;
+  if (formData.published_at !== undefined) updateData.published_at = formData.published_at || null;
+  if (formData.category !== undefined) updateData.category = formData.category || null;
+
   const { error } = await supabase
     .from("articles")
-    .update({
-      title: formData.title,
-      description: formData.description || null,
-      url: formData.url,
-      thumbnail_url: formData.thumbnail_url || null,
-      author: formData.author || null,
-      published_at: formData.published_at || null,
-      category: formData.category || null,
-    })
+    .update(updateData)
     .eq("id", id);
 
   if (error) {
@@ -324,9 +326,9 @@ export async function createCurriculumAction(formData: {
 export async function updateCurriculumAction(
   id: string,
   formData: {
-    title: string;
+    title?: string;
     description?: string;
-    difficulty: "beginner" | "intermediate" | "advanced";
+    difficulty?: "beginner" | "intermediate" | "advanced";
     estimated_hours?: number;
     category?: string | null;
   }
@@ -339,15 +341,17 @@ export async function updateCurriculumAction(
 
   const supabase = await createClient();
 
+  // Build update object with only provided fields
+  const updateData: any = {};
+  if (formData.title !== undefined) updateData.title = formData.title;
+  if (formData.description !== undefined) updateData.description = formData.description || null;
+  if (formData.difficulty !== undefined) updateData.difficulty = formData.difficulty;
+  if (formData.estimated_hours !== undefined) updateData.estimated_hours = formData.estimated_hours || null;
+  if (formData.category !== undefined) updateData.category = formData.category || null;
+
   const { error } = await supabase
     .from("curriculums")
-    .update({
-      title: formData.title,
-      description: formData.description || null,
-      difficulty: formData.difficulty,
-      estimated_hours: formData.estimated_hours || null,
-      category: formData.category || null,
-    })
+    .update(updateData)
     .eq("id", id);
 
   if (error) {

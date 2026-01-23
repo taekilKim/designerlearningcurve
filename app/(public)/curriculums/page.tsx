@@ -65,7 +65,6 @@ export default async function CurriculumsPage({
             <CurriculumListInfinite
               initialCurriculums={curriculums || []}
               category={category}
-              categories={categories || []}
             />
           </div>
         </div>
