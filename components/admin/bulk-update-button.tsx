@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { bulkUpdateArticlesMetadataAction } from "./actions";
 import { toast } from "sonner";
 import {
@@ -86,7 +86,14 @@ export function BulkUpdateButton() {
               onClick={handleBulkUpdate}
               disabled={isUpdating}
             >
-              {isUpdating ? "업데이트 중..." : "시작"}
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  업데이트 중
+                </>
+              ) : (
+                "시작"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
