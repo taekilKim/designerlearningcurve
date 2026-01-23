@@ -19,6 +19,38 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'medium.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**.daumcdn.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'blogcodestates.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.adobe.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img-svr.elancer.co.kr',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.toss-internal.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'yozm.wishket.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'velog.io',
+      },
     ],
   },
 };
