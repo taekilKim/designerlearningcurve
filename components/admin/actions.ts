@@ -473,3 +473,64 @@ export async function deleteCurriculumItemAction(
   revalidatePath(`/curriculums/${curriculumId}`);
   return { success: true };
 }
+
+// Public Actions - Load More Articles
+
+export async function loadMoreArticlesAction(
+  page: number,
+  pageSize: number = 12,
+  category?: string
+) {
+  const supabase = await createClient();
+  const offset = page * pageSize;
+
+  let query = supabase
+    .from("articles")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const { data: articles, error } = await query;
+
+  if (error) {
+    console.error("Error loading more articles:", error);
+    return { success: false, error: error.message, articles: [] };
+  }
+
+  return { success: true, articles: articles || [] };
+}
+
+export async function loadMoreCurriculumsAction(
+  page: number,
+  pageSize: number = 12,
+  category?: string
+) {
+  const supabase = await createClient();
+  const offset = page * pageSize;
+
+  let query = supabase
+    .from("curriculums")
+    .select(`
+      *,
+      curriculum_items(count)
+    `)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const { data: curriculums, error } = await query;
+
+  if (error) {
+    console.error("Error loading more curriculums:", error);
+    return { success: false, error: error.message, curriculums: [] };
+  }
+
+  return { success: true, curriculums: curriculums || [] };
+}

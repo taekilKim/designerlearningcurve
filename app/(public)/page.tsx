@@ -1,20 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { ArticleCard } from "@/components/home/article-card";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
+import { ArticleListInfinite } from "@/components/home/article-list-infinite";
 
 export const dynamic = 'force-dynamic';
 
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  thumbnail_url: string;
-  author: string;
-  published_at: string;
-  category?: string;
-}
+const PAGE_SIZE = 12;
 
 export default async function Home({
   searchParams,
@@ -27,7 +17,8 @@ export default async function Home({
   let query = supabase
     .from("articles")
     .select("*")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(PAGE_SIZE);
 
   // Filter by category if specified
   if (category) {
@@ -56,31 +47,11 @@ export default async function Home({
               </p>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles?.map((article: Article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
-
-            {(!articles || articles.length === 0) && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {category
-                    ? "이 카테고리에 아티클이 없습니다."
-                    : "아직 등록된 아티클이 없습니다."}
-                </p>
-              </div>
-            )}
-
-            <div className="mt-16 text-center">
-              <Link
-                href="/curriculums"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
-              >
-                커리큘럼 둘러보기
-              </Link>
-            </div>
+            {/* Infinite Scroll Article List */}
+            <ArticleListInfinite
+              initialArticles={articles || []}
+              category={category}
+            />
           </div>
         </div>
       </div>

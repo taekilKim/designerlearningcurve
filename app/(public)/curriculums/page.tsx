@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
-import { CurriculumCard } from "@/components/curriculums/curriculum-card";
+import { CurriculumListInfinite } from "@/components/curriculums/curriculum-list-infinite";
 
 export const dynamic = 'force-dynamic';
+
+const PAGE_SIZE = 12;
 
 export default async function CurriculumsPage({
   searchParams,
@@ -18,7 +20,8 @@ export default async function CurriculumsPage({
       *,
       curriculum_items(count)
     `)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(PAGE_SIZE);
 
   // Filter by category if specified
   if (category) {
@@ -47,22 +50,11 @@ export default async function CurriculumsPage({
               </p>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {curriculums?.map((curriculum: any) => (
-                <CurriculumCard key={curriculum.id} curriculum={curriculum} />
-              ))}
-            </div>
-
-            {(!curriculums || curriculums.length === 0) && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {category
-                    ? "이 카테고리에 커리큘럼이 없습니다."
-                    : "아직 등록된 커리큘럼이 없습니다."}
-                </p>
-              </div>
-            )}
+            {/* Infinite Scroll Curriculum List */}
+            <CurriculumListInfinite
+              initialCurriculums={curriculums || []}
+              category={category}
+            />
           </div>
         </div>
       </div>
