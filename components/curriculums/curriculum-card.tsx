@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { BookOpen } from "lucide-react";
 import Image from "next/image";
 
@@ -11,15 +10,36 @@ interface CurriculumCardProps {
     category?: string | null;
     thumbnail_url?: string | null;
     difficulty?: "beginner" | "intermediate" | "advanced";
+    estimated_hours?: number | null;
+    created_at?: string;
     curriculum_items?: { count: number }[];
   };
 }
 
-const difficultyLabels = {
+const difficultyLabels: Record<string, string> = {
   beginner: "초급",
   intermediate: "중급",
   advanced: "고급",
 };
+
+const difficultyColors: Record<string, string> = {
+  beginner: "text-emerald-600",
+  intermediate: "text-blue-600",
+  advanced: "text-purple-600",
+};
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  try {
+    const date = new Date(dateStr);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}.${m}.${d}`;
+  } catch {
+    return "";
+  }
+}
 
 export function CurriculumCard({ curriculum }: CurriculumCardProps) {
   const articleCount = curriculum.curriculum_items?.[0]?.count || 0;
@@ -29,9 +49,9 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
       href={`/curriculums/${curriculum.id}`}
       className="group block cursor-pointer"
     >
-      <article className="rounded-lg overflow-hidden transition-all hover:bg-muted/30">
+      <article>
         {/* Thumbnail */}
-        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
           {curriculum.thumbnail_url ? (
             <Image
               src={curriculum.thumbnail_url}
@@ -40,45 +60,56 @@ export function CurriculumCard({ curriculum }: CurriculumCardProps) {
               loading="lazy"
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgZmlsbD0iI2VlZSIvPjwvc3ZnPg=="
-              className="object-cover transition-opacity group-hover:opacity-80"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/15 group-hover:to-primary/10 transition-colors">
+            <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/10 to-primary/5">
               <BookOpen className="h-12 w-12 text-muted-foreground/40" />
             </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-3">
-          {/* Category & Difficulty */}
-          <div className="flex items-center gap-2">
-            {curriculum.category && (
-              <Badge variant="secondary" className="text-xs">
-                {curriculum.category}
-              </Badge>
+        <div className="pt-3 space-y-1.5">
+          {/* Meta */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{articleCount}개 아티클</span>
+            {curriculum.estimated_hours && (
+              <>
+                <span className="text-muted-foreground/50">|</span>
+                <span>약 {curriculum.estimated_hours}시간</span>
+              </>
             )}
-            {curriculum.difficulty && (
-              <Badge variant="outline" className="text-xs">
-                {difficultyLabels[curriculum.difficulty]}
-              </Badge>
+            {curriculum.created_at && (
+              <>
+                <span className="text-muted-foreground/50">|</span>
+                <span>{formatDate(curriculum.created_at)}</span>
+              </>
             )}
           </div>
 
           {/* Title */}
-          <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-[15px] leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {curriculum.title}
           </h3>
 
           {/* Description */}
-          <p className="text-sm text-muted-foreground line-clamp-2">
+          <p className="text-sm text-muted-foreground line-clamp-1">
             {curriculum.description || "설명이 없습니다."}
           </p>
 
-          {/* Meta */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <BookOpen className="h-3.5 w-3.5" />
-            <span>{articleCount}개 아티클</span>
+          {/* Tags */}
+          <div className="flex items-center gap-2 pt-1">
+            {curriculum.difficulty && (
+              <span className={`text-xs font-medium ${difficultyColors[curriculum.difficulty]}`}>
+                {difficultyLabels[curriculum.difficulty]}
+              </span>
+            )}
+            {curriculum.category && (
+              <span className="text-xs font-medium text-primary">
+                {curriculum.category}
+              </span>
+            )}
           </div>
         </div>
       </article>
