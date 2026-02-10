@@ -97,6 +97,10 @@ function scoreRelevance(article: ArticleData): number {
   const baseKeywords = ["ux", "ui", "디자인", "figma", "피그마", "프로덕트"];
   if (baseKeywords.some((kw) => text.includes(kw))) score += 1;
 
+  // 해외 아티클 비중 낮추기 (번역 필요 → 학습 난이도 상승)
+  const url = article.url.toLowerCase();
+  if (url.includes("medium.com")) score -= 3;
+
   return score;
 }
 
