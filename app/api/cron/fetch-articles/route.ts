@@ -285,10 +285,33 @@ export async function GET(request: Request) {
     const existingUrls = new Set((existing || []).map((a) => a.url));
     const newArticles = candidates.filter((a) => !existingUrls.has(a.url));
 
-    // 4. 스코어 높은 순 정렬, 최대 10개
-    const toInsert = newArticles
-      .sort((a, b) => scoreRelevance(b) - scoreRelevance(a))
-      .slice(0, 10);
+    // 4. 카테고리별 분산 선택 (최대 10개)
+    //    각 카테고리에서 스코어 높은 순으로 라운드로빈
+    const byCategory = new Map<string, ArticleData[]>();
+    for (const a of newArticles) {
+      const list = byCategory.get(a.category) || [];
+      list.push(a);
+      byCategory.set(a.category, list);
+    }
+    // 각 카테고리 내 스코어 정렬
+    for (const list of byCategory.values()) {
+      list.sort((a, b) => scoreRelevance(b) - scoreRelevance(a));
+    }
+    const toInsert: ArticleData[] = [];
+    const categories = [...byCategory.keys()];
+    let round = 0;
+    while (toInsert.length < 10 && categories.length > 0) {
+      for (let i = categories.length - 1; i >= 0; i--) {
+        if (toInsert.length >= 10) break;
+        const list = byCategory.get(categories[i])!;
+        if (round < list.length) {
+          toInsert.push(list[round]);
+        } else {
+          categories.splice(i, 1); // 이 카테고리는 소진됨
+        }
+      }
+      round++;
+    }
 
     // 5. OG 메타데이터 보강
     const enriched = await Promise.all(
