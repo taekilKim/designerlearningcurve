@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean (508886f 푸시 완료)
-- 마지막 작업 (2/9): 빌드 에러 수정, 로그아웃 서버 액션 전환, 카드 리디자인
+- 상태: Clean (459d2db 푸시 완료)
+- 마지막 작업 (2/9~2/10): 아티클 수집 확장, 최신순 정렬, 미디엄 비중 조절
 
 ## Development Commands
 ```bash
@@ -93,7 +93,19 @@ npm run lint     # ESLint 검사
 - **로그아웃 서버 액션 전환**: GNB + BottomNav 모두 form action → signOutAction (508886f)
 - **관리자 메뉴**: checkAdminStatus 에러 핸들링 강화 (508886f)
 
-#### Next Steps
-- Vercel 배포 성공 확인
-- 테스트 엔드포인트 호출 (/api/test-insert-articles)
+### 2026-02-09 Session 2 (continued 2/10)
+- **Vercel Cron 유료 플랜 이슈**: crons 설정 제거 → 외부 cron-job.org 사용 (3dc945b)
+- **RLS 차단 이슈**: API 라우트에서 articles INSERT 실패 → `lib/supabase/admin.ts` service role 클라이언트 생성 (02c873b)
+- **아티클 수집 범위 대폭 확장** (d03fea6):
+  - RSS 소스 6개 → 19개 (브런치 12개 키워드, 요즘IT, Medium 3개, velog 3개)
+  - `classifyCategory()`: 키워드 기반 12개 카테고리 자동 분류
+  - `scoreRelevance()`: 디자인 테크닉 우선 스코어링 (원리/테크닉 +3, 도구/트렌드 -1)
+- **최신 등록순 정렬** (015e79b):
+  - 아티클 공개 페이지: `published_at` → `created_at` DESC 정렬
+  - 어드민 아티클/커리큘럼 목록 테이블에 "등록일" 컬럼 추가
+- **미디엄 비중 낮춤** (459d2db): 해외 아티클 스코어 -3 패널티 (번역 필요 → 학습 난이도 상승)
+
+#### Pending
+- SUPABASE_SERVICE_ROLE_KEY Vercel 환경변수 추가 확인 필요
+- cron-job.org 에서 /api/cron/fetch-articles 정상 트리거 확인
 - 로그아웃 & 관리자 메뉴 프로덕션 동작 확인
