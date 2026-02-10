@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean (16c9d9c 푸시 완료)
-- 마지막 작업 (2/10): 100개 대량 수집, 소스별 라운드로빈, 해외 소스 제거
+- 상태: Clean (b6815cd 푸시 완료)
+- 마지막 작업 (2/10): Phase 0 SEO 구현
 
 ## Development Commands
 ```bash
@@ -118,22 +118,34 @@ npm run lint     # ESLint 검사
 
 - **100개 대량 수집** (b482b6d): 일회성 bulk-collect 엔드포인트로 초기 아티클 확보
 - **소스별 라운드로빈** (9010779): 카테고리별 → 소스 도메인별 라운드로빈 (같은 소스 독식 방지)
-- **해외 Medium 소스 제거** (16c9d9c): 해외 아티클은 별도 로드맵으로 분리 예정
+- **해외 Medium 소스 제거** (16c9d9c): 해외 아티클은 별도 로드맵(Phase 3)으로 분리
+
+### 2026-02-10 Session 3
+- **Phase 0 SEO 구현** (b6815cd):
+  - 루트 메타데이터: metadataBase, OG, Twitter Card, keywords, title template
+  - 페이지별 메타데이터: 홈/커리큘럼 목록(정적), 커리큘럼 상세(generateMetadata 동적)
+  - `app/robots.ts`: admin, my-learning, auth, api 크롤링 차단
+  - `app/sitemap.ts`: 정적(홈, 커리큘럼 목록) + 동적(개별 커리큘럼) 생성
+  - `app/opengraph-image.tsx`: 1200x630 동적 OG 이미지 (Edge Runtime)
+  - JSON-LD: 홈(WebSite schema), 커리큘럼 상세(Course schema)
 
 #### Pending
 - SUPABASE_SERVICE_ROLE_KEY Vercel 환경변수 확인 필요 (500 에러 원인)
 - cron-job.org 스케줄: 하루 2회 (9am, 3pm KST)로 변경 완료
 - 로그아웃 & 관리자 메뉴 프로덕션 동작 확인
+- 구글 서치 콘솔 등록 + sitemap 제출
+- 네이버 서치어드바이저 등록
 
 ## Roadmap
 
 ### Phase 0: SEO & 검색엔진 최적화 ← 현재
-- [ ] 페이지별 메타 태그 (title, description, og:image, twitter:card)
-- [ ] 동적 OG 이미지 생성 (아티클/커리큘럼별)
-- [ ] sitemap.xml 자동 생성
-- [ ] robots.txt 설정
-- [ ] 구조화 데이터 (JSON-LD: Article, Course)
-- [ ] 네이버 서치어드바이저 / 구글 서치 콘솔 등록
+- [x] 페이지별 메타 태그 (title, description, og:image, twitter:card)
+- [x] 동적 OG 이미지 생성
+- [x] sitemap.xml 자동 생성
+- [x] robots.txt 설정
+- [x] 구조화 데이터 (JSON-LD: WebSite, Course)
+- [ ] 구글 서치 콘솔 등록 + sitemap 제출
+- [ ] 네이버 서치어드바이저 등록
 - [ ] 노출 채널: 네이버 블로그, 디자이너 커뮤니티, SNS 공유 최적화
 
 ### Phase 1: 콘텐츠 탐색 강화
