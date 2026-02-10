@@ -5,8 +5,9 @@ import * as cheerio from "cheerio";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// ── RSS 소스 (cron과 동일) ──
+// ── 디자인 전문 소스만 (테크블로그 제외) ──
 const RSS_SOURCES = [
+  // ── 브런치 (디자인 키워드) ──
   { name: "브런치 UI디자인", url: "https://brunch.co.kr/rss/keyword/UI%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "브런치 UX디자인", url: "https://brunch.co.kr/rss/keyword/UX%EB%94%94%EC%9E%90%EC%9D%B8", category: "UX 디자인" },
   { name: "브런치 디자인시스템", url: "https://brunch.co.kr/rss/keyword/%EB%94%94%EC%9E%90%EC%9D%B8%EC%8B%9C%EC%8A%A4%ED%85%9C", category: "디자인 시스템" },
@@ -19,25 +20,33 @@ const RSS_SOURCES = [
   { name: "브런치 사용자리서치", url: "https://brunch.co.kr/rss/keyword/%EC%82%AC%EC%9A%A9%EC%9E%90%EB%A6%AC%EC%84%9C%EC%B9%98", category: "사용자 리서치" },
   { name: "브런치 인터랙션", url: "https://brunch.co.kr/rss/keyword/%EC%9D%B8%ED%84%B0%EB%9E%99%EC%85%98%EB%94%94%EC%9E%90%EC%9D%B8", category: "인터랙션 디자인" },
   { name: "브런치 프로덕트디자인", url: "https://brunch.co.kr/rss/keyword/%ED%94%84%EB%A1%9C%EB%8D%95%ED%8A%B8%EB%94%94%EC%9E%90%EC%9D%B8", category: "프로덕트 디자인" },
+  // 추가 브런치 키워드 (리서치/기획)
+  { name: "브런치 UX리서치", url: "https://brunch.co.kr/rss/keyword/UX%EB%A6%AC%EC%84%9C%EC%B9%98", category: "사용자 리서치" },
+  { name: "브런치 서비스기획", url: "https://brunch.co.kr/rss/keyword/%EC%84%9C%EB%B9%84%EC%8A%A4%EA%B8%B0%ED%9A%8D", category: "사용자 리서치" },
+  { name: "브런치 사용성테스트", url: "https://brunch.co.kr/rss/keyword/%EC%82%AC%EC%9A%A9%EC%84%B1%ED%85%8C%EC%8A%A4%ED%8A%B8", category: "사용자 리서치" },
+  { name: "브런치 정보설계", url: "https://brunch.co.kr/rss/keyword/%EC%A0%95%EB%B3%B4%EC%84%A4%EA%B3%84", category: "사용자 리서치" },
+  // 추가 브런치 키워드 (디자인 시스템)
+  { name: "브런치 컴포넌트디자인", url: "https://brunch.co.kr/rss/keyword/%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8%EB%94%94%EC%9E%90%EC%9D%B8", category: "디자인 시스템" },
+  { name: "브런치 디자인가이드", url: "https://brunch.co.kr/rss/keyword/%EB%94%94%EC%9E%90%EC%9D%B8%EA%B0%80%EC%9D%B4%EB%93%9C", category: "디자인 시스템" },
+  { name: "브런치 스타일가이드", url: "https://brunch.co.kr/rss/keyword/%EC%8A%A4%ED%83%80%EC%9D%BC%EA%B0%80%EC%9D%B4%EB%93%9C", category: "디자인 시스템" },
+
+  // ── 국내 디자인 커뮤니티 & 매거진 ──
   { name: "서핏 매거진", url: "https://mag.surfit.io/feed", category: "프로덕트 디자인" },
   { name: "요즘IT", url: "https://yozm.wishket.com/magazine/feed/", category: "프로덕트 디자인" },
   { name: "DISQUIET", url: "https://disquiet.io/rss", category: "프로덕트 디자인" },
-  { name: "토스 테크", url: "https://toss.tech/rss.xml", category: "프로덕트 디자인" },
-  { name: "당근 테크", url: "https://medium.com/feed/daangn", category: "프로덕트 디자인" },
-  { name: "우아한형제들", url: "https://techblog.woowahan.com/feed", category: "프로덕트 디자인" },
-  { name: "카카오 테크", url: "https://tech.kakao.com/feed", category: "프로덕트 디자인" },
-  { name: "네이버 D2", url: "https://d2.naver.com/d2.atom", category: "프로덕트 디자인" },
-  { name: "뱅크샐러드", url: "https://medium.com/feed/banksalad", category: "프로덕트 디자인" },
-  { name: "딜라이트룸", url: "https://medium.com/feed/delightroom", category: "프로덕트 디자인" },
-  { name: "강남언니", url: "https://blog.gangnamunni.com/feed.xml", category: "프로덕트 디자인" },
-  { name: "쿠팡 엔지니어링", url: "https://medium.com/feed/coupang-engineering", category: "프로덕트 디자인" },
-  { name: "여기어때 테크", url: "https://techblog.gccompany.co.kr/feed", category: "프로덕트 디자인" },
+
+  // ── velog ──
   { name: "velog UXUI", url: "https://v2.velog.io/rss/tag/UXUI", category: "UX 디자인" },
   { name: "velog 디자인", url: "https://v2.velog.io/rss/tag/%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "velog Figma", url: "https://v2.velog.io/rss/tag/figma", category: "피그마 실무" },
+
+  // ── Medium (디자인 태그만) ──
   { name: "Medium UX", url: "https://medium.com/feed/tag/ux-design", category: "UX 디자인" },
   { name: "Medium UI", url: "https://medium.com/feed/tag/ui-design", category: "UI 디자인" },
   { name: "Medium Design Systems", url: "https://medium.com/feed/tag/design-systems", category: "디자인 시스템" },
+  { name: "Medium UX Research", url: "https://medium.com/feed/tag/ux-research", category: "사용자 리서치" },
+  { name: "Medium Product Design", url: "https://medium.com/feed/tag/product-design", category: "프로덕트 디자인" },
+  { name: "Medium Interaction Design", url: "https://medium.com/feed/tag/interaction-design", category: "인터랙션 디자인" },
 ];
 
 interface ArticleData {
@@ -81,8 +90,27 @@ function classifyCategory(title: string, desc: string, fallback: string): string
   return fallback;
 }
 
+// 디자인 관련 키워드가 있는지 엄격 체크
+function hasDesignRelevance(text: string): boolean {
+  const designKeywords = [
+    "ux", "ui", "디자인", "design", "figma", "피그마", "프로덕트 디자이너",
+    "사용자 경험", "사용성", "인터페이스", "와이어프레임", "프로토타입",
+    "리서치", "research", "페르소나", "저니맵", "사용자 조사",
+    "디자인 시스템", "컴포넌트", "스타일 가이드", "토큰",
+    "타이포", "폰트", "서체", "컬러", "색상", "아이콘", "레이아웃",
+    "그리드", "반응형", "인터랙션", "모션", "애니메이션",
+    "접근성", "기획", "서비스 기획", "정보 설계",
+    "일러스트", "비주얼", "브랜딩", "brand",
+  ];
+  return designKeywords.some((kw) => text.includes(kw));
+}
+
 function scoreRelevance(article: ArticleData): number {
   const text = `${article.title} ${article.description}`.toLowerCase();
+
+  // 디자인 관련 키워드가 전혀 없으면 즉시 제외
+  if (!hasDesignRelevance(text)) return -100;
+
   const highPriority = [
     "디자인 시스템", "컬러", "색상", "타이포", "서체", "폰트",
     "여백", "그리드", "레이아웃", "아이콘", "반응형",
@@ -106,35 +134,19 @@ function scoreRelevance(article: ArticleData): number {
   ];
 
   let score = 0;
-  const devOnly = [
-    "backend", "백엔드", "서버 개발", "spring", "node.js", "express",
-    "kubernetes", "k8s", "docker", "devops", "ci/cd", "jenkins",
-    "database", "데이터베이스", "sql", "mongodb", "redis",
-    "machine learning", "머신러닝", "딥러닝", "deep learning",
-    "알고리즘 문제", "코딩 테스트", "leetcode",
-    "ios 개발", "android 개발", "swift", "kotlin",
-    "인프라", "terraform", "aws lambda", "배포 자동화",
-  ];
-  if (devOnly.some((kw) => text.includes(kw))) score -= 10;
   for (const kw of highPriority) if (text.includes(kw)) score += 3;
   for (const kw of lowPriority) if (text.includes(kw)) score -= 1;
 
   const baseKeywords = ["ux", "ui", "디자인", "figma", "피그마", "프로덕트"];
   if (baseKeywords.some((kw) => text.includes(kw))) score += 1;
 
+  // 국내 디자인 전문 소스 가산 (+2)
   const url = article.url.toLowerCase();
   const koreanDesignSources = ["mag.surfit.io", "brunch.co.kr"];
-  if (koreanDesignSources.some((d) => url.includes(d))) score += 3;
-  const koreanTechBlogs = [
-    "toss.tech", "techblog.woowahan.com", "tech.kakao.com",
-    "d2.naver.com", "blog.gangnamunni.com", "techblog.gccompany.co.kr",
-  ];
-  if (koreanTechBlogs.some((d) => url.includes(d))) score += 2;
-  const koreanMediumPubs = ["/daangn", "/banksalad", "/delightroom", "/coupang-engineering"];
-  if (url.includes("medium.com") && koreanMediumPubs.some((p) => url.includes(p))) score += 1;
-  else if (url.includes("medium.com/")) score -= 3;
-  const koreanCommunity = ["yozm.wishket.com", "disquiet.io", "velog.io"];
-  if (koreanCommunity.some((d) => url.includes(d))) score += 1;
+  if (koreanDesignSources.some((d) => url.includes(d))) score += 2;
+
+  // 해외 Medium 감점 (-2)
+  if (url.includes("medium.com/")) score -= 2;
 
   return score;
 }
@@ -224,11 +236,43 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const url = new URL(request.url);
+  const mode = url.searchParams.get("mode"); // "cleanup" | "collect" | default (both)
+
   try {
     const supabase = createAdminClient();
 
-    // 1. 모든 RSS 소스에서 수집
+    // ── STEP 0: 기존 비디자인 아티클 정리 ──
+    let cleanedCount = 0;
+    if (mode !== "collect") {
+      // 기존 모든 아티클을 가져와서 디자인 관련도 체크
+      const { data: allExisting } = await supabase.from("articles").select("id, title, description, url");
+      if (allExisting) {
+        const toDelete: string[] = [];
+        for (const a of allExisting) {
+          const text = `${a.title || ""} ${a.description || ""}`.toLowerCase();
+          if (!hasDesignRelevance(text)) {
+            toDelete.push(a.id);
+          }
+        }
+        if (toDelete.length > 0) {
+          // 10개씩 삭제
+          for (let i = 0; i < toDelete.length; i += 10) {
+            const batch = toDelete.slice(i, i + 10);
+            await supabase.from("articles").delete().in("id", batch);
+          }
+          cleanedCount = toDelete.length;
+        }
+      }
+    }
+
+    if (mode === "cleanup") {
+      return NextResponse.json({ success: true, cleanedCount });
+    }
+
+    // ── STEP 1: RSS 수집 ──
     const allArticles: ArticleData[] = [];
+    const sourceStats: Record<string, number> = {};
     const results = await Promise.allSettled(
       RSS_SOURCES.map(async (source) => {
         try {
@@ -236,21 +280,27 @@ export async function GET(request: Request) {
             headers: { "User-Agent": "Mozilla/5.0 (compatible; ArticleBot/1.0)" },
             signal: AbortSignal.timeout(10000),
           });
-          if (!res.ok) return [];
-          return parseRSS(await res.text(), source.category);
+          if (!res.ok) {
+            sourceStats[source.name] = -1; // fetch failed
+            return [];
+          }
+          const parsed = parseRSS(await res.text(), source.category);
+          sourceStats[source.name] = parsed.length;
+          return parsed;
         } catch {
+          sourceStats[source.name] = -1;
           return [];
         }
       })
     );
     for (const r of results) if (r.status === "fulfilled") allArticles.push(...r.value);
 
-    // 2. 관련성 필터 (score > 0)
+    // ── STEP 2: 엄격한 필터링 (score > 0 + 디자인 관련 필수) ──
     const scored = allArticles
       .map((a) => ({ ...a, score: scoreRelevance(a) }))
       .filter((a) => a.score > 0);
 
-    // 3. 중복 제거 (DB 기존 + 같은 배치 내 URL 중복)
+    // ── STEP 3: 중복 제거 ──
     const { data: existing } = await supabase.from("articles").select("url");
     const existingUrls = new Set((existing || []).map((a) => a.url));
     const seen = new Set<string>();
@@ -260,7 +310,7 @@ export async function GET(request: Request) {
       return true;
     });
 
-    // 4. 3개 버킷으로 분류, 스코어순 정렬
+    // ── STEP 4: 버킷 분류 & 비율 선택 ──
     const buckets: Record<BucketName, typeof unique> = {
       uxui: [],
       research: [],
@@ -273,12 +323,11 @@ export async function GET(request: Request) {
       buckets[key].sort((a, b) => b.score - a.score);
     }
 
-    // 5. 목표 비율: UX/UI 50개, 리서치 30개, 디자인시스템 20개
+    // 목표: UX/UI 50, 리서치 30, 디자인시스템 20 (가용량에 맞춰 조정)
     const TARGET = { uxui: 50, research: 30, designsystem: 20 };
     const TOTAL = 100;
 
     const toInsert: ArticleData[] = [];
-    // 각 버킷에서 목표만큼 선택
     for (const key of Object.keys(TARGET) as BucketName[]) {
       const take = Math.min(TARGET[key], buckets[key].length);
       toInsert.push(...buckets[key].slice(0, take));
@@ -286,20 +335,18 @@ export async function GET(request: Request) {
 
     // 목표 미달 시 다른 버킷에서 보충
     if (toInsert.length < TOTAL) {
-      const remaining = TOTAL - toInsert.length;
       const usedUrls = new Set(toInsert.map((a) => a.url));
       const leftover = unique
         .filter((a) => !usedUrls.has(a.url))
         .sort((a, b) => b.score - a.score);
-      toInsert.push(...leftover.slice(0, remaining));
+      toInsert.push(...leftover.slice(0, TOTAL - toInsert.length));
     }
 
-    // 6. OG 메타데이터 보강 (10개씩 동시 처리)
+    // ── STEP 5: OG 메타데이터 보강 (10개씩 동시) ──
     const CONCURRENCY = 10;
     for (let i = 0; i < toInsert.length; i += CONCURRENCY) {
-      const batch = toInsert.slice(i, i + CONCURRENCY);
-      const ogResults = await Promise.allSettled(
-        batch.map(async (article, idx) => {
+      await Promise.allSettled(
+        toInsert.slice(i, i + CONCURRENCY).map(async (article, idx) => {
           if (!article.thumbnail_url) {
             const og = await extractOGMetadata(article.url);
             if (og.thumbnail_url) toInsert[i + idx] = { ...toInsert[i + idx], ...og, url: toInsert[i + idx].url };
@@ -308,7 +355,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // 7. DB 삽입
+    // ── STEP 6: DB 삽입 ──
     let insertedCount = 0;
     const insertedArticles: ArticleData[] = [];
     const failedArticles: string[] = [];
@@ -331,8 +378,9 @@ export async function GET(request: Request) {
       }
     }
 
-    // 8. 통계
+    // ── 통계 ──
     const stats = {
+      cleanedCount,
       totalFetched: allArticles.length,
       afterScoring: scored.length,
       afterDedup: unique.length,
@@ -348,6 +396,7 @@ export async function GET(request: Request) {
         acc[a.category] = (acc[a.category] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
+      sourceStats,
     };
 
     return NextResponse.json({
@@ -355,7 +404,7 @@ export async function GET(request: Request) {
       stats,
       failedArticles: failedArticles.slice(0, 10),
       articles: insertedArticles.map((a) => ({
-        title: a.title, url: a.url, category: a.category,
+        title: a.title, url: a.url, category: a.category, score: scoreRelevance(a),
       })),
     });
   } catch (error) {
