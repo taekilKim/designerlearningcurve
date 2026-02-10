@@ -74,11 +74,20 @@ function classifyCategory(title: string, desc: string, fallback: string): string
     [["그리드", "grid", "레이아웃", "layout", "여백", "spacing", "정렬"], "레이아웃"],
     [["반응형", "responsive", "브레이크포인트", "adaptive", "모바일 대응"], "반응형 디자인"],
     [["피그마", "figma", "오토레이아웃", "auto layout", "컴포넌트 정리"], "피그마 실무"],
-    [["리서치", "research", "인터뷰", "사용성 테스트", "유저 테스트", "페르소나"], "사용자 리서치"],
+    [["리서치", "research", "인터뷰", "사용성 테스트", "유저 테스트", "페르소나",
+      "저니맵", "journey map", "hmw", "how might we", "문제 정의", "problem definition",
+      "사용자 조사", "user research", "디자인 리서치", "설문", "survey",
+      "데이터 리터러시", "정량 분석", "정성 분석", "a/b 테스트", "ab테스트",
+      "인사이트 도출", "어피니티 다이어그램", "affinity diagram"], "사용자 리서치"],
     [["인터랙션", "interaction", "모션", "애니메이션", "마이크로인터랙션", "트랜지션"], "인터랙션 디자인"],
-    [["프로덕트", "product", "서비스 디자인", "ux 전략"], "프로덕트 디자인"],
-    [["ui 원리", "ui 패턴", "ui 컴포넌트", "버튼", "입력 필드", "네비게이션", "카드 디자인"], "UI 디자인"],
-    [["ux 원칙", "사용자 경험", "휴리스틱", "어포던스", "접근성"], "UX 디자인"],
+    [["프로덕트", "product", "서비스 디자인", "ux 전략", "서비스 기획",
+      "고객 여정", "사용자 플로우", "user flow", "정보 설계", "ia 설계",
+      "information architecture"], "프로덕트 디자인"],
+    [["ui 원리", "ui 패턴", "ui 컴포넌트", "버튼", "입력 필드", "네비게이션", "카드 디자인",
+      "와이어프레임", "wireframe", "프로토타입", "prototype", "목업"], "UI 디자인"],
+    [["ux 원칙", "사용자 경험", "휴리스틱", "어포던스", "접근성",
+      "ux 법칙", "ux law", "닐슨", "노먼", "멘탈 모델", "인지 부하",
+      "ux 라이팅", "ux writing", "마이크로카피"], "UX 디자인"],
   ];
 
   for (const [keywords, category] of rules) {
@@ -91,13 +100,26 @@ function classifyCategory(title: string, desc: string, fallback: string): string
 function scoreRelevance(article: ArticleData): number {
   const text = `${article.title} ${article.description}`.toLowerCase();
 
-  // 높은 점수: 디자인 원리/테크닉
+  // 높은 점수: 디자인 원리/테크닉/리서치
   const highPriority = [
     "디자인 시스템", "컬러", "색상", "타이포", "서체", "폰트",
     "여백", "그리드", "레이아웃", "아이콘", "반응형",
     "컴포넌트", "디자인 원리", "ui 패턴", "사용성",
     "접근성", "리서치", "인터랙션", "모션", "간격",
     "정렬", "계층", "hierarchy", "비주얼", "스타일 가이드",
+    // 리서치 & UX 방법론
+    "디자인 리서치", "ux 리서치", "사용자 조사", "user research",
+    "hmw", "how might we", "문제 정의", "페르소나", "저니맵",
+    "사용성 테스트", "유저 테스트", "a/b 테스트",
+    "데이터 리터러시", "정량 분석", "정성 분석", "인사이트",
+    "어피니티", "affinity", "설문 설계",
+    // UX 원칙 & 이론
+    "ux 원칙", "ux 법칙", "ux law", "휴리스틱", "닐슨",
+    "노먼", "멘탈 모델", "인지 부하", "어포던스",
+    "ux 라이팅", "ux writing", "마이크로카피",
+    // 설계 & 프로세스
+    "정보 설계", "ia 설계", "사용자 플로우", "user flow",
+    "와이어프레임", "프로토타입", "서비스 기획", "고객 여정",
   ];
 
   // 낮은 점수: 도구/트렌드/뉴스
