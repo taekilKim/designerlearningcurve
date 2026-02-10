@@ -25,8 +25,6 @@ const RSS_SOURCES = [
   { name: "브런치 프로덕트디자인", url: "https://brunch.co.kr/rss/keyword/%ED%94%84%EB%A1%9C%EB%8D%95%ED%8A%B8%EB%94%94%EC%9E%90%EC%9D%B8", category: "프로덕트 디자인" },
 
   // ── 국내 디자인 커뮤니티 & 매거진 ──
-  { name: "pxd Story", url: "https://story.pxd.co.kr/feed", category: "UX 디자인" },
-  { name: "디지털인사이트", url: "https://ditoday.com/feed", category: "UI 디자인" },
   { name: "서핏 매거진", url: "https://mag.surfit.io/feed", category: "프로덕트 디자인" },
   { name: "요즘IT", url: "https://yozm.wishket.com/magazine/feed/", category: "프로덕트 디자인" },
   { name: "DISQUIET", url: "https://disquiet.io/rss", category: "프로덕트 디자인" },
@@ -41,7 +39,6 @@ const RSS_SOURCES = [
   { name: "딜라이트룸", url: "https://medium.com/feed/delightroom", category: "프로덕트 디자인" },
   { name: "강남언니", url: "https://blog.gangnamunni.com/feed.xml", category: "프로덕트 디자인" },
   { name: "쿠팡 엔지니어링", url: "https://medium.com/feed/coupang-engineering", category: "프로덕트 디자인" },
-  { name: "라인 테크", url: "https://techblog.lycorp.co.jp/ko/feed/index.xml", category: "프로덕트 디자인" },
   { name: "여기어때 테크", url: "https://techblog.gccompany.co.kr/feed", category: "프로덕트 디자인" },
 
   // ── velog ──
@@ -110,6 +107,18 @@ function scoreRelevance(article: ArticleData): number {
   ];
 
   let score = 0;
+
+  // 개발 전용 글 제외 (-10점 → 사실상 필터링)
+  const devOnly = [
+    "backend", "백엔드", "서버 개발", "spring", "node.js", "express",
+    "kubernetes", "k8s", "docker", "devops", "ci/cd", "jenkins",
+    "database", "데이터베이스", "sql", "mongodb", "redis",
+    "machine learning", "머신러닝", "딥러닝", "deep learning",
+    "알고리즘 문제", "코딩 테스트", "leetcode",
+    "ios 개발", "android 개발", "swift", "kotlin",
+    "인프라", "terraform", "aws lambda", "배포 자동화",
+  ];
+  if (devOnly.some((kw) => text.includes(kw))) score -= 10;
   for (const kw of highPriority) if (text.includes(kw)) score += 3;
   for (const kw of lowPriority) if (text.includes(kw)) score -= 1;
 
@@ -121,14 +130,14 @@ function scoreRelevance(article: ArticleData): number {
   const url = article.url.toLowerCase();
 
   // 국내 디자인 전문 소스 가산 (+3)
-  const koreanDesignSources = ["story.pxd.co.kr", "ditoday.com", "mag.surfit.io", "brunch.co.kr"];
+  const koreanDesignSources = ["mag.surfit.io", "brunch.co.kr"];
   if (koreanDesignSources.some((d) => url.includes(d))) score += 3;
 
   // 국내 IT 기업 블로그 가산 (+2)
   const koreanTechBlogs = [
     "toss.tech", "techblog.woowahan.com", "tech.kakao.com",
     "d2.naver.com", "blog.gangnamunni.com", "techblog.gccompany.co.kr",
-    "techblog.lycorp.co.jp", "devblog.kakaostyle.com",
+    "devblog.kakaostyle.com",
   ];
   if (koreanTechBlogs.some((d) => url.includes(d))) score += 2;
 
