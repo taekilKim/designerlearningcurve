@@ -6,13 +6,27 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { House, BookOpen, GraduationCap, UserGear, SignOut, SignIn } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { signOutAction } from "@/lib/auth-actions";
 
 export function BottomNav() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const supabase = createClient();
+
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+      if (error) return false;
+      return profile?.is_admin === true;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -21,16 +35,7 @@ export function BottomNav() {
           data: { user },
         } = await supabase.auth.getUser();
         setUser(user);
-
-        // Check admin status
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        }
+        setIsAdmin(user ? await checkAdminStatus(user.id) : false);
       } catch (error) {
         console.error("[Bottom Nav] Failed to fetch user:", error);
       }
@@ -41,33 +46,13 @@ export function BottomNav() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-
-      // Check admin status on auth change
-      if (session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", session.user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        } catch (error) {
-          console.error("[Bottom Nav] Failed to fetch admin status:", error);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setIsAdmin(currentUser ? await checkAdminStatus(currentUser.id) : false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("로그아웃되었습니다");
-    window.location.href = "/";
-  };
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
@@ -137,19 +122,24 @@ export function BottomNav() {
         })}
         {/* Login/Logout Button */}
         {user ? (
-          <button
-            onClick={handleSignOut}
-            className="flex flex-col items-center justify-center flex-1 h-full gap-1"
+          <form
+            action={signOutAction}
+            className="flex flex-col items-center justify-center flex-1 h-full"
           >
-            <SignOut
-              size={24}
-              weight="regular"
-              className="text-muted-foreground"
-            />
-            <span className="text-xs text-muted-foreground">
-              로그아웃
-            </span>
-          </button>
+            <button
+              type="submit"
+              className="flex flex-col items-center justify-center gap-1"
+            >
+              <SignOut
+                size={24}
+                weight="regular"
+                className="text-muted-foreground"
+              />
+              <span className="text-xs text-muted-foreground">
+                로그아웃
+              </span>
+            </button>
+          </form>
         ) : (
           <button
             onClick={handleSignIn}

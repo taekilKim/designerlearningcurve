@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean
-- 마지막 작업 (1/23): 관리자 패널 오버홀, 카테고리 관리 시스템, Select 컴포넌트 에러 수정
+- 상태: Clean (de4438f 푸시 완료)
+- 마지막 작업 (2/9): 카드 리디자인, 아티클 자동수집 시스템, Resend 이메일 연동
 
 ## Development Commands
 ```bash
@@ -76,6 +76,21 @@ npm run lint     # ESLint 검사
 ## Session Log
 ### 2026-02-09 Session 1
 - 프로젝트 전체 히스토리 파악 (68개 커밋, 1/10~1/23)
-- CLAUDE.md 생성 및 전체 커밋 히스토리 반영
-- /session-summary 커맨드 설정
-- MEMORY.md 업데이트
+- 로컬 브랜치 34커밋 뒤처짐 발견 → pull로 최신화
+- CLAUDE.md 생성, /session-summary 커맨드 설정, MEMORY.md 업데이트
+- **카드 레이아웃 리디자인**: 스크린샷 기반으로 미니멀 디자인 적용
+  - 파비콘 아이콘, 저자|날짜, 카테고리 텍스트 링크
+  - 4열 그리드 (xl:grid-cols-4)
+- **아티클 자동수집 시스템 구축**:
+  - `/api/cron/fetch-articles` — RSS 피드 기반 수집 + 중복 체크 + DB 삽입
+  - Vercel Cron 매 시간 실행 (`0 * * * *`)
+  - Resend 이메일 알림 → taekil.design@gmail.com
+  - `/api/test-insert-articles` — 테스트용 5개 아티클 즉시 삽입
+- Resend API 키 설정 완료 (Vercel + .env.local)
+- 로그아웃/관리자 메뉴 이슈 조사 (url 직접 접근은 작동 확인, 수정 보류)
+
+#### Next Steps
+- 테스트 엔드포인트 호출하여 5개 아티클 DB 삽입 + 이메일 발송 확인
+- 로그아웃 버튼 수정 (서버 액션 signOutAction으로 전환)
+- 관리자 메뉴 미표시 문제 디버깅
+- 빌드 에러 수정 (Next.js 16 /_global-error 이슈)

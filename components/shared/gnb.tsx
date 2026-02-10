@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { signOutAction } from "@/lib/auth-actions";
 
 export function GNB() {
   const pathname = usePathname();
@@ -14,6 +15,24 @@ export function GNB() {
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+      if (error) {
+        console.error("[GNB] Profile query error:", error.message);
+        return false;
+      }
+      return profile?.is_admin === true;
+    } catch (error) {
+      console.error("[GNB] Failed to fetch admin status:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -21,18 +40,7 @@ export function GNB() {
           data: { user },
         } = await supabase.auth.getUser();
         setUser(user);
-
-        // Check admin status
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        } else {
-          setIsAdmin(false);
-        }
+        setIsAdmin(user ? await checkAdminStatus(user.id) : false);
       } catch (error) {
         console.error("[GNB] Failed to fetch user:", error);
         setIsAdmin(false);
@@ -46,37 +54,13 @@ export function GNB() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-
-      // Check admin status on auth change
-      if (session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", session.user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        } catch (error) {
-          console.error("[GNB] Failed to fetch admin status:", error);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setIsAdmin(currentUser ? await checkAdminStatus(currentUser.id) : false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      // Force reload to clear all state
-      window.location.replace("/");
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
-  };
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
@@ -138,16 +122,20 @@ export function GNB() {
               <span className="text-sm text-muted-foreground hidden md:block">
                 {user.email}
               </span>
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                className="hidden md:flex"
-              >
-                로그아웃
-              </Button>
+              <form action={signOutAction}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="hidden md:flex cursor-pointer"
+                >
+                  로그아웃
+                </Button>
+              </form>
             </>
           ) : (
-            <Button onClick={handleSignIn} className="hidden md:flex">로그인</Button>
+            <Button onClick={handleSignIn} className="hidden md:flex cursor-pointer">
+              로그인
+            </Button>
           )}
         </div>
       </div>
