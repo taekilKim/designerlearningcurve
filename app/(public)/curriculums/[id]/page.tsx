@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,27 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: curriculum } = await supabase
+    .from("curriculums")
+    .select("title, description")
+    .eq("id", id)
+    .single();
+
+  if (!curriculum) return {};
+
+  return {
+    title: curriculum.title,
+    description: curriculum.description || `${curriculum.title} 커리큘럼으로 디자인 역량을 키워보세요.`,
+    openGraph: {
+      title: `${curriculum.title} | Designer Learning Curve`,
+      description: curriculum.description || `${curriculum.title} 커리큘럼으로 디자인 역량을 키워보세요.`,
+    },
+  };
+}
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -71,8 +93,24 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
     isEnrolled = !!enrollment;
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: curriculum.title,
+    description: curriculum.description || "",
+    provider: {
+      "@type": "Organization",
+      name: "Designer Learning Curve",
+      url: "https://designpath.vercel.app",
+    },
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <h1 className="text-4xl font-bold">{curriculum.title}</h1>

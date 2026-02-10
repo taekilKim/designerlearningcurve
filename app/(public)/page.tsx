@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
 import { ArticleListInfinite } from "@/components/home/article-list-infinite";
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: "아티클 큐레이션",
+  description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  openGraph: {
+    title: "아티클 큐레이션 | Designer Learning Curve",
+    description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  },
+};
 
 const PAGE_SIZE = 12;
 
@@ -42,8 +52,20 @@ export default async function Home({
     console.error("Error fetching articles:", articlesError);
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Designer Learning Curve",
+    url: "https://designpath.vercel.app",
+    description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  };
+
   return (
     <div className="w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="max-w-[1600px] mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}

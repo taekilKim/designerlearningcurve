@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
 import { CurriculumListInfinite } from "@/components/curriculums/curriculum-list-infinite";
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: "커리큘럼",
+  description: "체계적으로 구성된 디자인 학습 경로를 따라 UX/UI 역량을 키워보세요.",
+  openGraph: {
+    title: "커리큘럼 | Designer Learning Curve",
+    description: "체계적으로 구성된 디자인 학습 경로를 따라 UX/UI 역량을 키워보세요.",
+  },
+};
 
 const PAGE_SIZE = 12;
 
