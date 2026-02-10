@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean (423943b 푸시 완료)
-- 마지막 작업 (2/9~2/10): RSS 40개 소스 확장, 카테고리 라운드로빈, 키워드 확장
+- 상태: Clean (16c9d9c 푸시 완료)
+- 마지막 작업 (2/10): 100개 대량 수집, 소스별 라운드로빈, 해외 소스 제거
 
 ## Development Commands
 ```bash
@@ -116,7 +116,47 @@ npm run lint     # ESLint 검사
   - 개발 전용 키워드 -10 패널티 (backend, k8s, docker, SQL 등)
 - **키워드 확장** (423943b): classifyCategory/scoreRelevance에 UX리서치, 디자인 방법론, HMW, 페르소나, 저니맵 등 추가
 
+- **100개 대량 수집** (b482b6d): 일회성 bulk-collect 엔드포인트로 초기 아티클 확보
+- **소스별 라운드로빈** (9010779): 카테고리별 → 소스 도메인별 라운드로빈 (같은 소스 독식 방지)
+- **해외 Medium 소스 제거** (16c9d9c): 해외 아티클은 별도 로드맵으로 분리 예정
+
 #### Pending
 - SUPABASE_SERVICE_ROLE_KEY Vercel 환경변수 확인 필요 (500 에러 원인)
-- cron-job.org 스케줄: 하루 2회 (9am, 3pm KST)로 변경 예정
+- cron-job.org 스케줄: 하루 2회 (9am, 3pm KST)로 변경 완료
 - 로그아웃 & 관리자 메뉴 프로덕션 동작 확인
+
+## Roadmap
+
+### Phase 0: SEO & 검색엔진 최적화 ← 현재
+- [ ] 페이지별 메타 태그 (title, description, og:image, twitter:card)
+- [ ] 동적 OG 이미지 생성 (아티클/커리큘럼별)
+- [ ] sitemap.xml 자동 생성
+- [ ] robots.txt 설정
+- [ ] 구조화 데이터 (JSON-LD: Article, Course)
+- [ ] 네이버 서치어드바이저 / 구글 서치 콘솔 등록
+- [ ] 노출 채널: 네이버 블로그, 디자이너 커뮤니티, SNS 공유 최적화
+
+### Phase 1: 콘텐츠 탐색 강화
+- [ ] 아티클 검색 (제목/설명 키워드)
+- [ ] 북마크 (로그인 유저 아티클 저장)
+- [ ] 아티클 상세 미리보기
+
+### Phase 2: 학습 경험 고도화
+- [ ] 학습 진도 대시보드 개선 (주간/월간 시각화)
+- [ ] 커리큘럼 기반 관련 아티클 추천
+- [ ] 커리큘럼 난이도별 필터
+
+### Phase 3: 해외 아티클 & 번역
+- [ ] 해외 아티클 전용 탭 (Medium, Smashing Magazine 등)
+- [ ] LLM API 자동 번역 (제목/설명 한국어)
+- [ ] 원문 링크 병행 제공
+
+### Phase 4: 커뮤니티 & 성장
+- [ ] 아티클 코멘트/메모 공유
+- [ ] 인기 아티클 랭킹
+- [ ] 주간 큐레이션 뉴스레터
+
+### Phase 5: 수익화 & 확장
+- [ ] 프리미엄 커리큘럼
+- [ ] 디자이너 멘토링 매칭
+- [ ] 기업용 팀 학습 관리
