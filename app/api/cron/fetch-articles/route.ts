@@ -45,11 +45,6 @@ const RSS_SOURCES = [
   { name: "velog UXUI", url: "https://v2.velog.io/rss/tag/UXUI", category: "UX 디자인" },
   { name: "velog 디자인", url: "https://v2.velog.io/rss/tag/%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "velog Figma", url: "https://v2.velog.io/rss/tag/figma", category: "피그마 실무" },
-
-  // ── Medium (해외, 비중 낮춤) ──
-  { name: "Medium UX", url: "https://medium.com/feed/tag/ux-design", category: "UX 디자인" },
-  { name: "Medium UI", url: "https://medium.com/feed/tag/ui-design", category: "UI 디자인" },
-  { name: "Medium Design Systems", url: "https://medium.com/feed/tag/design-systems", category: "디자인 시스템" },
 ];
 
 interface ArticleData {
@@ -166,8 +161,6 @@ function scoreRelevance(article: ArticleData): number {
   // 국내 기업 Medium 블로그 (한국어 콘텐츠) 가산 (+1)
   const koreanMediumPubs = ["/daangn", "/banksalad", "/delightroom", "/coupang-engineering"];
   if (url.includes("medium.com") && koreanMediumPubs.some((p) => url.includes(p))) score += 1;
-  // 해외 Medium (영어 태그 피드) 감점 (-5)
-  else if (url.includes("medium.com/")) score -= 5;
 
   // 국내 커뮤니티 가산 (+1)
   const koreanCommunity = ["yozm.wishket.com", "disquiet.io", "velog.io"];
