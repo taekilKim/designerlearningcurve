@@ -18,7 +18,7 @@ export default async function Home({
   let articlesQuery = supabase
     .from("articles")
     .select("*")
-    .order("published_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
 
   if (category) {

@@ -121,16 +121,17 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">제목</TableHead>
-              <TableHead className="w-[150px]">작성자</TableHead>
-              <TableHead className="w-[180px]">카테고리</TableHead>
-              <TableHead className="w-[180px]">작업</TableHead>
+              <TableHead className="w-[40%]">제목</TableHead>
+              <TableHead className="w-[120px]">작성자</TableHead>
+              <TableHead className="w-[150px]">카테고리</TableHead>
+              <TableHead className="w-[110px]">등록일</TableHead>
+              <TableHead className="w-[150px]">작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {articles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   등록된 아티클이 없습니다.
                 </TableCell>
               </TableRow>
@@ -176,6 +177,11 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
                         ))}
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(article.created_at).toLocaleDateString("ko-KR")}
+                    </div>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-2">

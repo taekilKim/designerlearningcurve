@@ -150,17 +150,18 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">제목</TableHead>
-              <TableHead className="w-[120px]">아티클</TableHead>
-              <TableHead className="w-[150px]">난이도</TableHead>
-              <TableHead className="w-[180px]">카테고리</TableHead>
-              <TableHead className="w-[120px]">작업</TableHead>
+              <TableHead className="w-[35%]">제목</TableHead>
+              <TableHead className="w-[80px]">아티클</TableHead>
+              <TableHead className="w-[130px]">난이도</TableHead>
+              <TableHead className="w-[160px]">카테고리</TableHead>
+              <TableHead className="w-[100px]">등록일</TableHead>
+              <TableHead className="w-[100px]">작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {curriculums.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   등록된 커리큘럼이 없습니다.
                 </TableCell>
               </TableRow>
@@ -230,6 +231,11 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(curriculum.created_at).toLocaleDateString("ko-KR")}
+                      </div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">

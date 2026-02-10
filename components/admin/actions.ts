@@ -491,7 +491,7 @@ export async function loadMoreArticlesAction(
   let query = supabase
     .from("articles")
     .select("*")
-    .order("published_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
   if (category) {
