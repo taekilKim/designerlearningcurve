@@ -49,11 +49,6 @@ const RSS_SOURCES = [
   { name: "velog 디자인", url: "https://v2.velog.io/rss/tag/%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "velog Figma", url: "https://v2.velog.io/rss/tag/figma", category: "피그마 실무" },
 
-  // ── 구글 뉴스 (디자인 키워드 검색) ──
-  { name: "구글 UX UI 디자인", url: "https://news.google.com/rss/search?q=UX+UI+%EB%94%94%EC%9E%90%EC%9D%B8&hl=ko&gl=KR&ceid=KR:ko", category: "UX 디자인" },
-  { name: "구글 디자인시스템", url: "https://news.google.com/rss/search?q=%EB%94%94%EC%9E%90%EC%9D%B8+%EC%8B%9C%EC%8A%A4%ED%85%9C&hl=ko&gl=KR&ceid=KR:ko", category: "디자인 시스템" },
-  { name: "구글 피그마 디자인", url: "https://news.google.com/rss/search?q=%ED%94%BC%EA%B7%B8%EB%A7%88+%EB%94%94%EC%9E%90%EC%9D%B8&hl=ko&gl=KR&ceid=KR:ko", category: "피그마 실무" },
-
   // ── Medium (해외, 비중 낮춤) ──
   { name: "Medium UX", url: "https://medium.com/feed/tag/ux-design", category: "UX 디자인" },
   { name: "Medium UI", url: "https://medium.com/feed/tag/ui-design", category: "UI 디자인" },
