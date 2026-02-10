@@ -3,11 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["icn1"],
-  "crons": [
-    {
-      "path": "/api/cron/fetch-articles",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "regions": ["icn1"]
 }
