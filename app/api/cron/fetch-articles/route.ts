@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { Resend } from "resend";
@@ -228,7 +228,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // 1. Fetch articles from RSS feeds
     console.log("[Cron] Fetching articles from RSS sources...");

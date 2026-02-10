@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean (de4438f 푸시 완료)
-- 마지막 작업 (2/9): 카드 리디자인, 아티클 자동수집 시스템, Resend 이메일 연동
+- 상태: Clean (508886f 푸시 완료)
+- 마지막 작업 (2/9): 빌드 에러 수정, 로그아웃 서버 액션 전환, 카드 리디자인
 
 ## Development Commands
 ```bash
@@ -89,8 +89,11 @@ npm run lint     # ESLint 검사
 - Resend API 키 설정 완료 (Vercel + .env.local)
 - 로그아웃/관리자 메뉴 이슈 조사 (url 직접 접근은 작동 확인, 수정 보류)
 
+- **빌드 에러 수정**: Supabase 클라이언트 env 변수 없을 때 placeholder로 대체 (508886f)
+- **로그아웃 서버 액션 전환**: GNB + BottomNav 모두 form action → signOutAction (508886f)
+- **관리자 메뉴**: checkAdminStatus 에러 핸들링 강화 (508886f)
+
 #### Next Steps
-- 테스트 엔드포인트 호출하여 5개 아티클 DB 삽입 + 이메일 발송 확인
-- 로그아웃 버튼 수정 (서버 액션 signOutAction으로 전환)
-- 관리자 메뉴 미표시 문제 디버깅
-- 빌드 에러 수정 (Next.js 16 /_global-error 이슈)
+- Vercel 배포 성공 확인
+- 테스트 엔드포인트 호출 (/api/test-insert-articles)
+- 로그아웃 & 관리자 메뉴 프로덕션 동작 확인
