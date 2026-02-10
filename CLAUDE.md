@@ -63,8 +63,8 @@ profiles, articles, curriculums, curriculum_items, enrollments, completed_items,
 
 ## Current Status
 - 브랜치: claude/designer-learning-platform-LwTXG
-- 상태: Clean (459d2db 푸시 완료)
-- 마지막 작업 (2/9~2/10): 아티클 수집 확장, 최신순 정렬, 미디엄 비중 조절
+- 상태: Clean (423943b 푸시 완료)
+- 마지막 작업 (2/9~2/10): RSS 40개 소스 확장, 카테고리 라운드로빈, 키워드 확장
 
 ## Development Commands
 ```bash
@@ -104,8 +104,19 @@ npm run lint     # ESLint 검사
   - 아티클 공개 페이지: `published_at` → `created_at` DESC 정렬
   - 어드민 아티클/커리큘럼 목록 테이블에 "등록일" 컬럼 추가
 - **미디엄 비중 낮춤** (459d2db): 해외 아티클 스코어 -3 패널티 (번역 필요 → 학습 난이도 상승)
+- **RSS 소스 대폭 확장** (dd6cd95): 19→40개 소스
+  - 국내 IT 기업 블로그 10개 (토스, 당근, 배민, 카카오, 네이버D2, 뱅크샐러드, 딜라이트룸, 강남언니, 쿠팡, 여기어때)
+  - 디자인 커뮤니티 3개 (서핏, 요즘IT, DISQUIET)
+  - 도메인별 스코어링 (국내 디자인 +3, 국내 테크 +2, 해외 Medium -3)
+  - Atom 피드 파싱 추가 (네이버 D2)
+- **구글 뉴스 제거** (6b1d632): 리다이렉트 URL 문제 (실제 랜딩 페이지 대신 news.google.com URL 반환)
+- **카테고리 라운드로빈** (f411429): 한 분야 10개 집중 → 카테고리별 균등 수집
+- **소스 정리 + 개발글 필터링** (dfb520c):
+  - pxd, 디지털인사이트, lycorp 소스 제거
+  - 개발 전용 키워드 -10 패널티 (backend, k8s, docker, SQL 등)
+- **키워드 확장** (423943b): classifyCategory/scoreRelevance에 UX리서치, 디자인 방법론, HMW, 페르소나, 저니맵 등 추가
 
 #### Pending
-- SUPABASE_SERVICE_ROLE_KEY Vercel 환경변수 추가 확인 필요
-- cron-job.org 에서 /api/cron/fetch-articles 정상 트리거 확인
+- SUPABASE_SERVICE_ROLE_KEY Vercel 환경변수 확인 필요 (500 에러 원인)
+- cron-job.org 스케줄: 하루 2회 (9am, 3pm KST)로 변경 예정
 - 로그아웃 & 관리자 메뉴 프로덕션 동작 확인
