@@ -166,8 +166,8 @@ function scoreRelevance(article: ArticleData): number {
   // 국내 기업 Medium 블로그 (한국어 콘텐츠) 가산 (+1)
   const koreanMediumPubs = ["/daangn", "/banksalad", "/delightroom", "/coupang-engineering"];
   if (url.includes("medium.com") && koreanMediumPubs.some((p) => url.includes(p))) score += 1;
-  // 해외 Medium (영어 태그 피드) 감점 (-3)
-  else if (url.includes("medium.com/")) score -= 3;
+  // 해외 Medium (영어 태그 피드) 감점 (-5)
+  else if (url.includes("medium.com/")) score -= 5;
 
   // 국내 커뮤니티 가산 (+1)
   const koreanCommunity = ["yozm.wishket.com", "disquiet.io", "velog.io"];
@@ -316,29 +316,29 @@ export async function GET(request: Request) {
     const existingUrls = new Set((existing || []).map((a) => a.url));
     const newArticles = candidates.filter((a) => !existingUrls.has(a.url));
 
-    // 4. 카테고리별 분산 선택 (최대 10개)
-    //    각 카테고리에서 스코어 높은 순으로 라운드로빈
-    const byCategory = new Map<string, ArticleData[]>();
+    // 4. 소스별 분산 선택 (최대 10개)
+    //    각 소스 도메인에서 스코어 높은 순으로 라운드로빈
+    const bySource = new Map<string, ArticleData[]>();
     for (const a of newArticles) {
-      const list = byCategory.get(a.category) || [];
+      const domain = new URL(a.url).hostname;
+      const list = bySource.get(domain) || [];
       list.push(a);
-      byCategory.set(a.category, list);
+      bySource.set(domain, list);
     }
-    // 각 카테고리 내 스코어 정렬
-    for (const list of byCategory.values()) {
+    for (const list of bySource.values()) {
       list.sort((a, b) => scoreRelevance(b) - scoreRelevance(a));
     }
     const toInsert: ArticleData[] = [];
-    const categories = [...byCategory.keys()];
+    const sources = [...bySource.keys()];
     let round = 0;
-    while (toInsert.length < 10 && categories.length > 0) {
-      for (let i = categories.length - 1; i >= 0; i--) {
+    while (toInsert.length < 10 && sources.length > 0) {
+      for (let i = sources.length - 1; i >= 0; i--) {
         if (toInsert.length >= 10) break;
-        const list = byCategory.get(categories[i])!;
+        const list = bySource.get(sources[i])!;
         if (round < list.length) {
           toInsert.push(list[round]);
         } else {
-          categories.splice(i, 1); // 이 카테고리는 소진됨
+          sources.splice(i, 1);
         }
       }
       round++;
