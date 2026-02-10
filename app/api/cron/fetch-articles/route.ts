@@ -8,9 +8,9 @@ export const maxDuration = 60;
 
 const NOTIFY_EMAIL = "taekil.design@gmail.com";
 
-// RSS feeds — 디자인 테크닉/학습 중심으로 확장
+// RSS feeds — 디자인 테크닉/학습 중심, 국내 소스 우선
 const RSS_SOURCES = [
-  // 브런치 - 디자인 원리/테크닉 키워드
+  // ── 브런치 (디자인 원리/테크닉 키워드) ──
   { name: "브런치 UI디자인", url: "https://brunch.co.kr/rss/keyword/UI%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "브런치 UX디자인", url: "https://brunch.co.kr/rss/keyword/UX%EB%94%94%EC%9E%90%EC%9D%B8", category: "UX 디자인" },
   { name: "브런치 디자인시스템", url: "https://brunch.co.kr/rss/keyword/%EB%94%94%EC%9E%90%EC%9D%B8%EC%8B%9C%EC%8A%A4%ED%85%9C", category: "디자인 시스템" },
@@ -23,16 +23,41 @@ const RSS_SOURCES = [
   { name: "브런치 사용자리서치", url: "https://brunch.co.kr/rss/keyword/%EC%82%AC%EC%9A%A9%EC%9E%90%EB%A6%AC%EC%84%9C%EC%B9%98", category: "사용자 리서치" },
   { name: "브런치 인터랙션", url: "https://brunch.co.kr/rss/keyword/%EC%9D%B8%ED%84%B0%EB%9E%99%EC%85%98%EB%94%94%EC%9E%90%EC%9D%B8", category: "인터랙션 디자인" },
   { name: "브런치 프로덕트디자인", url: "https://brunch.co.kr/rss/keyword/%ED%94%84%EB%A1%9C%EB%8D%95%ED%8A%B8%EB%94%94%EC%9E%90%EC%9D%B8", category: "프로덕트 디자인" },
-  // 요즘IT
+
+  // ── 국내 디자인 커뮤니티 & 매거진 ──
+  { name: "pxd Story", url: "https://story.pxd.co.kr/feed", category: "UX 디자인" },
+  { name: "디지털인사이트", url: "https://ditoday.com/feed", category: "UI 디자인" },
+  { name: "서핏 매거진", url: "https://mag.surfit.io/feed", category: "프로덕트 디자인" },
   { name: "요즘IT", url: "https://yozm.wishket.com/magazine/feed/", category: "프로덕트 디자인" },
-  // Medium
-  { name: "Medium UX", url: "https://medium.com/feed/tag/ux-design", category: "UX 디자인" },
-  { name: "Medium UI", url: "https://medium.com/feed/tag/ui-design", category: "UI 디자인" },
-  { name: "Medium Design Systems", url: "https://medium.com/feed/tag/design-systems", category: "디자인 시스템" },
-  // velog
+  { name: "DISQUIET", url: "https://disquiet.io/rss", category: "프로덕트 디자인" },
+
+  // ── 국내 IT 기업 테크블로그 ──
+  { name: "토스 테크", url: "https://toss.tech/rss.xml", category: "프로덕트 디자인" },
+  { name: "당근 테크", url: "https://medium.com/feed/daangn", category: "프로덕트 디자인" },
+  { name: "우아한형제들", url: "https://techblog.woowahan.com/feed", category: "프로덕트 디자인" },
+  { name: "카카오 테크", url: "https://tech.kakao.com/feed", category: "프로덕트 디자인" },
+  { name: "네이버 D2", url: "https://d2.naver.com/d2.atom", category: "프로덕트 디자인" },
+  { name: "뱅크샐러드", url: "https://medium.com/feed/banksalad", category: "프로덕트 디자인" },
+  { name: "딜라이트룸", url: "https://medium.com/feed/delightroom", category: "프로덕트 디자인" },
+  { name: "강남언니", url: "https://blog.gangnamunni.com/feed.xml", category: "프로덕트 디자인" },
+  { name: "쿠팡 엔지니어링", url: "https://medium.com/feed/coupang-engineering", category: "프로덕트 디자인" },
+  { name: "라인 테크", url: "https://techblog.lycorp.co.jp/ko/feed/index.xml", category: "프로덕트 디자인" },
+  { name: "여기어때 테크", url: "https://techblog.gccompany.co.kr/feed", category: "프로덕트 디자인" },
+
+  // ── velog ──
   { name: "velog UXUI", url: "https://v2.velog.io/rss/tag/UXUI", category: "UX 디자인" },
   { name: "velog 디자인", url: "https://v2.velog.io/rss/tag/%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
   { name: "velog Figma", url: "https://v2.velog.io/rss/tag/figma", category: "피그마 실무" },
+
+  // ── 구글 뉴스 (디자인 키워드 검색) ──
+  { name: "구글 UX UI 디자인", url: "https://news.google.com/rss/search?q=UX+UI+%EB%94%94%EC%9E%90%EC%9D%B8&hl=ko&gl=KR&ceid=KR:ko", category: "UX 디자인" },
+  { name: "구글 디자인시스템", url: "https://news.google.com/rss/search?q=%EB%94%94%EC%9E%90%EC%9D%B8+%EC%8B%9C%EC%8A%A4%ED%85%9C&hl=ko&gl=KR&ceid=KR:ko", category: "디자인 시스템" },
+  { name: "구글 피그마 디자인", url: "https://news.google.com/rss/search?q=%ED%94%BC%EA%B7%B8%EB%A7%88+%EB%94%94%EC%9E%90%EC%9D%B8&hl=ko&gl=KR&ceid=KR:ko", category: "피그마 실무" },
+
+  // ── Medium (해외, 비중 낮춤) ──
+  { name: "Medium UX", url: "https://medium.com/feed/tag/ux-design", category: "UX 디자인" },
+  { name: "Medium UI", url: "https://medium.com/feed/tag/ui-design", category: "UI 디자인" },
+  { name: "Medium Design Systems", url: "https://medium.com/feed/tag/design-systems", category: "디자인 시스템" },
 ];
 
 interface ArticleData {
@@ -97,9 +122,30 @@ function scoreRelevance(article: ArticleData): number {
   const baseKeywords = ["ux", "ui", "디자인", "figma", "피그마", "프로덕트"];
   if (baseKeywords.some((kw) => text.includes(kw))) score += 1;
 
-  // 해외 아티클 비중 낮추기 (번역 필요 → 학습 난이도 상승)
+  // ── 출처별 가산/감점 ──
   const url = article.url.toLowerCase();
-  if (url.includes("medium.com")) score -= 3;
+
+  // 국내 디자인 전문 소스 가산 (+3)
+  const koreanDesignSources = ["story.pxd.co.kr", "ditoday.com", "mag.surfit.io", "brunch.co.kr"];
+  if (koreanDesignSources.some((d) => url.includes(d))) score += 3;
+
+  // 국내 IT 기업 블로그 가산 (+2)
+  const koreanTechBlogs = [
+    "toss.tech", "techblog.woowahan.com", "tech.kakao.com",
+    "d2.naver.com", "blog.gangnamunni.com", "techblog.gccompany.co.kr",
+    "techblog.lycorp.co.jp", "devblog.kakaostyle.com",
+  ];
+  if (koreanTechBlogs.some((d) => url.includes(d))) score += 2;
+
+  // 국내 기업 Medium 블로그 (한국어 콘텐츠) 가산 (+1)
+  const koreanMediumPubs = ["/daangn", "/banksalad", "/delightroom", "/coupang-engineering"];
+  if (url.includes("medium.com") && koreanMediumPubs.some((p) => url.includes(p))) score += 1;
+  // 해외 Medium (영어 태그 피드) 감점 (-3)
+  else if (url.includes("medium.com/")) score -= 3;
+
+  // 국내 커뮤니티 가산 (+1)
+  const koreanCommunity = ["yozm.wishket.com", "disquiet.io", "velog.io"];
+  if (koreanCommunity.some((d) => url.includes(d))) score += 1;
 
   return score;
 }
@@ -108,6 +154,7 @@ function parseRSS(xml: string, defaultCategory: string): ArticleData[] {
   const $ = cheerio.load(xml, { xmlMode: true });
   const articles: ArticleData[] = [];
 
+  // RSS 2.0 <item> 파싱
   $("item").each((_, el) => {
     const title = $(el).find("title").text().trim();
     const link = $(el).find("link").text().trim() || $(el).find("guid").text().trim();
@@ -129,6 +176,27 @@ function parseRSS(xml: string, defaultCategory: string): ArticleData[] {
       });
     }
   });
+
+  // Atom <entry> 파싱 (네이버 D2 등)
+  if (articles.length === 0) {
+    $("entry").each((_, el) => {
+      const title = $(el).find("title").text().trim();
+      const link = $(el).find("link").attr("href") || "";
+      const summary = $(el).find("summary, content").text().trim().replace(/<[^>]*>/g, "").slice(0, 200);
+      const author = $(el).find("author name").text().trim() || null;
+      const updated = $(el).find("updated, published").text().trim();
+
+      if (title && link) {
+        const category = classifyCategory(title, summary, defaultCategory);
+        articles.push({
+          title, description: summary || "", url: link,
+          thumbnail_url: null, author,
+          published_at: updated ? new Date(updated).toISOString() : new Date().toISOString(),
+          category,
+        });
+      }
+    });
+  }
 
   return articles;
 }
