@@ -244,19 +244,50 @@ export async function GET(request: Request) {
 
     // ── STEP 0: 기존 비디자인 아티클 정리 ──
     let cleanedCount = 0;
+    const cleanedTitles: string[] = [];
     if (mode !== "collect") {
-      // 기존 모든 아티클을 가져와서 디자인 관련도 체크
       const { data: allExisting } = await supabase.from("articles").select("id, title, description, url");
       if (allExisting) {
         const toDelete: string[] = [];
         for (const a of allExisting) {
-          const text = `${a.title || ""} ${a.description || ""}`.toLowerCase();
-          if (!hasDesignRelevance(text)) {
+          const title = (a.title || "").toLowerCase();
+          const titleAndDesc = `${a.title || ""} ${a.description || ""}`.toLowerCase();
+          const articleUrl = (a.url || "").toLowerCase();
+
+          // 제목 기반 엄격 판단: 제목에 디자인 관련 키워드가 있어야 함
+          const titleHasDesign = [
+            "디자인", "design", "ux", "ui", "피그마", "figma", "프로토타입",
+            "와이어프레임", "리서치", "사용자", "사용성", "인터페이스",
+            "컬러", "색상", "타이포", "폰트", "서체", "아이콘", "레이아웃",
+            "반응형", "인터랙션", "모션", "애니메이션", "접근성",
+            "컴포넌트", "스타일 가이드", "토큰", "일러스트", "비주얼",
+            "브랜딩", "기획", "product", "프로덕트 디자이너",
+            "a/b 테스트", "ab테스트", "히트맵", "페르소나", "저니맵",
+          ].some((kw) => title.includes(kw));
+
+          // 디자인 전문 소스는 유지 (brunch 디자인 키워드, surfit, yozm)
+          const isDesignSource = ["brunch.co.kr", "mag.surfit.io", "yozm.wishket.com"].some((d) => articleUrl.includes(d));
+
+          // 확실한 비디자인 키워드 (제목 기반)
+          const isDevArticle = [
+            "보안", "서버", "api", "batch", "kafka", "redis",
+            "kubernetes", "docker", "인프라", "배포", "트랜잭션",
+            "데이터베이스", "sql", "캐싱", "레거시", "정산",
+            "머신러닝", "딥러닝", "llm", "모델 개발", "채용",
+            "코딩 테스트", "알고리즘", "파이프라인",
+            "e2e 자동화", "아키텍처", "마이크로서비스",
+            "취약점", "webhook", "terraform",
+            "앰배서더", "인턴십", "기술세션 영상",
+          ].some((kw) => title.includes(kw));
+
+          // 삭제 조건: 제목에 디자인 키워드 없고, 디자인 소스도 아니면 삭제
+          // 또는 확실한 개발 아티클이면 삭제
+          if (isDevArticle || (!titleHasDesign && !isDesignSource)) {
             toDelete.push(a.id);
+            cleanedTitles.push(a.title);
           }
         }
         if (toDelete.length > 0) {
-          // 10개씩 삭제
           for (let i = 0; i < toDelete.length; i += 10) {
             const batch = toDelete.slice(i, i + 10);
             await supabase.from("articles").delete().in("id", batch);
@@ -267,7 +298,7 @@ export async function GET(request: Request) {
     }
 
     if (mode === "cleanup") {
-      return NextResponse.json({ success: true, cleanedCount });
+      return NextResponse.json({ success: true, cleanedCount, cleanedTitles });
     }
 
     // ── STEP 1: RSS 수집 ──
