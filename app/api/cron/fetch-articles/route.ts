@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { Resend } from "resend";
+import { normalizeArticleUrl } from "@/lib/article-url";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -55,6 +56,22 @@ interface ArticleData {
   author: string | null;
   published_at: string;
   category: string;
+}
+
+function safeDomainFromUrl(rawUrl: string): string {
+  try {
+    return new URL(rawUrl).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "unknown";
+  }
+}
+
+function normalizeTitleKey(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim();
 }
 
 // 키워드 기반 카테고리 자동 분류
@@ -301,19 +318,66 @@ export async function GET(request: Request) {
     // 1. RSS 수집
     let candidates = await fetchFromRSS();
 
-    // 2. 관련성 스코어링 (0 이하 제외)
+    // 2. URL 정규화 + 배치 내 중복 제거
+    //    같은 아티클이 파라미터/앵커만 다른 URL로 반복 수집되는 문제 방지
+    const uniqueByKey = new Map<string, ArticleData>();
+    for (const raw of candidates) {
+      const normalizedUrl = normalizeArticleUrl(raw.url);
+      if (!normalizedUrl) continue;
+      const domain = safeDomainFromUrl(normalizedUrl);
+      const titleKey = normalizeTitleKey(raw.title);
+      const dedupKey = `${domain}|${titleKey}`;
+
+      const candidate: ArticleData = { ...raw, url: normalizedUrl };
+      const prev = uniqueByKey.get(dedupKey);
+      if (!prev) {
+        uniqueByKey.set(dedupKey, candidate);
+        continue;
+      }
+
+      const prevScore = scoreRelevance(prev);
+      const currentScore = scoreRelevance(candidate);
+      if (currentScore > prevScore) {
+        uniqueByKey.set(dedupKey, candidate);
+      } else if (currentScore === prevScore) {
+        const prevTime = Date.parse(prev.published_at);
+        const currentTime = Date.parse(candidate.published_at);
+        if (!Number.isNaN(currentTime) && (Number.isNaN(prevTime) || currentTime > prevTime)) {
+          uniqueByKey.set(dedupKey, candidate);
+        }
+      }
+    }
+    candidates = [...uniqueByKey.values()];
+
+    // 3. 관련성 스코어링 (0 이하 제외)
     candidates = candidates.filter((a) => scoreRelevance(a) > 0);
 
-    // 3. 중복 제거
-    const { data: existing } = await supabase.from("articles").select("url");
-    const existingUrls = new Set((existing || []).map((a) => a.url));
-    const newArticles = candidates.filter((a) => !existingUrls.has(a.url));
+    // 4. 기존 데이터 기준 중복 제거 (URL + 소스별 제목 키)
+    const { data: existing } = await supabase.from("articles").select("url,title");
+    const existingUrls = new Set(
+      (existing || [])
+        .map((a) => normalizeArticleUrl(a.url))
+        .filter(Boolean)
+    );
+    const existingTitleKeys = new Set(
+      (existing || []).map((a) => {
+        const domain = safeDomainFromUrl(a.url);
+        return `${domain}|${normalizeTitleKey(a.title ?? "")}`;
+      })
+    );
 
-    // 4. 소스별 분산 선택 (최대 10개)
+    const newArticles = candidates.filter((a) => {
+      const normalizedUrl = normalizeArticleUrl(a.url);
+      const domain = safeDomainFromUrl(normalizedUrl);
+      const titleKey = `${domain}|${normalizeTitleKey(a.title)}`;
+      return !existingUrls.has(normalizedUrl) && !existingTitleKeys.has(titleKey);
+    });
+
+    // 5. 소스별 분산 선택 (최대 10개)
     //    각 소스 도메인에서 스코어 높은 순으로 라운드로빈
     const bySource = new Map<string, ArticleData[]>();
     for (const a of newArticles) {
-      const domain = new URL(a.url).hostname;
+      const domain = safeDomainFromUrl(a.url);
       const list = bySource.get(domain) || [];
       list.push(a);
       bySource.set(domain, list);
@@ -337,7 +401,7 @@ export async function GET(request: Request) {
       round++;
     }
 
-    // 5. OG 메타데이터 보강
+    // 6. OG 메타데이터 보강
     const enriched = await Promise.all(
       toInsert.map(async (article) => {
         if (!article.thumbnail_url) {
@@ -348,7 +412,7 @@ export async function GET(request: Request) {
       })
     );
 
-    // 6. DB 삽입
+    // 7. DB 삽입
     let insertedCount = 0;
     const insertedArticles: ArticleData[] = [];
     for (const article of enriched) {
@@ -362,7 +426,7 @@ export async function GET(request: Request) {
       else console.log(`[Cron] Failed: "${article.title}":`, error.message);
     }
 
-    // 7. 이메일 발송
+    // 8. 이메일 발송
     if (insertedArticles.length > 0) await sendNotification(insertedArticles);
 
     return NextResponse.json({
