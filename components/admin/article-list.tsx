@@ -180,7 +180,15 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(article.created_at).toLocaleDateString("ko-KR")}
+                      {new Date(article.created_at).toLocaleString("ko-KR", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      })}
                     </div>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>

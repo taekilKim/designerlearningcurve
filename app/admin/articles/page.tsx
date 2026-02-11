@@ -15,7 +15,8 @@ export default async function ArticlesPage() {
     supabase
       .from("articles")
       .select("*")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false }),
     supabase
       .from("categories")
       .select("*")

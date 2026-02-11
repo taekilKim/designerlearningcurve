@@ -6,6 +6,9 @@ import { normalizeArticleUrl } from "@/lib/article-url";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+const TARGET_INSERT_COUNT = 10;
+const MAX_PER_SOURCE_FIRST_PASS = 1;
+const MAX_PER_SOURCE_SECOND_PASS = 2;
 
 const NOTIFY_EMAIL = "taekil.design@gmail.com";
 
@@ -386,20 +389,38 @@ export async function GET(request: Request) {
       list.sort((a, b) => scoreRelevance(b) - scoreRelevance(a));
     }
     const toInsert: ArticleData[] = [];
-    const sources = [...bySource.keys()];
-    let round = 0;
-    while (toInsert.length < 10 && sources.length > 0) {
-      for (let i = sources.length - 1; i >= 0; i--) {
-        if (toInsert.length >= 10) break;
-        const list = bySource.get(sources[i])!;
-        if (round < list.length) {
-          toInsert.push(list[round]);
-        } else {
-          sources.splice(i, 1);
+    const selectedCountBySource = new Map<string, number>();
+    const sourceOrder = [...bySource.keys()];
+
+    const pickByRoundRobin = (maxPerSource: number) => {
+      if (sourceOrder.length === 0) return;
+
+      let hasPickedInRound = true;
+      while (toInsert.length < TARGET_INSERT_COUNT && hasPickedInRound) {
+        hasPickedInRound = false;
+        for (const source of sourceOrder) {
+          if (toInsert.length >= TARGET_INSERT_COUNT) break;
+
+          const picked = selectedCountBySource.get(source) ?? 0;
+          if (picked >= maxPerSource) continue;
+
+          const queue = bySource.get(source);
+          if (!queue || queue.length === 0) continue;
+
+          const next = queue.shift();
+          if (!next) continue;
+
+          toInsert.push(next);
+          selectedCountBySource.set(source, picked + 1);
+          hasPickedInRound = true;
         }
       }
-      round++;
-    }
+    };
+
+    // Pass 1: 소스 다양성 우선 (소스당 1개)
+    pickByRoundRobin(MAX_PER_SOURCE_FIRST_PASS);
+    // Pass 2: 부족 시 보강 (소스당 최대 2개)
+    pickByRoundRobin(MAX_PER_SOURCE_SECOND_PASS);
 
     // 6. OG 메타데이터 보강
     const enriched = await Promise.all(
