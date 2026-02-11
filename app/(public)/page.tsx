@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
 import { ArticleListInfinite } from "@/components/home/article-list-infinite";
+import { buildMixedArticleFeed } from "@/lib/article-feed";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 const PAGE_SIZE = 12;
+const MAX_FEED_CANDIDATES = 500;
 
 export default async function Home({
   searchParams,
@@ -29,7 +31,7 @@ export default async function Home({
     .from("articles")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE);
+    .limit(MAX_FEED_CANDIDATES);
 
   if (category) {
     articlesQuery = articlesQuery.eq("category", category);
@@ -59,6 +61,7 @@ export default async function Home({
     url: "https://designpath.vercel.app",
     description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
   };
+  const initialArticles = buildMixedArticleFeed(articles || []).slice(0, PAGE_SIZE);
 
   return (
     <div className="w-full">
@@ -82,7 +85,7 @@ export default async function Home({
 
             {/* Infinite Scroll Article List */}
             <ArticleListInfinite
-              initialArticles={articles || []}
+              initialArticles={initialArticles}
               category={category}
             />
           </div>

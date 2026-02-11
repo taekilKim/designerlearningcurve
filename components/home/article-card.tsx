@@ -11,7 +11,7 @@ interface Article {
   url: string;
   thumbnail_url: string | null;
   author: string | null;
-  published_at: string;
+  published_at: string | null;
   category?: string;
 }
 
@@ -28,7 +28,8 @@ function getFaviconUrl(url: string) {
   }
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "";
   try {
     const date = new Date(dateStr);
     const y = date.getFullYear();

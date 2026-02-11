@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
 import * as cheerio from "cheerio";
+import { buildMixedArticleFeed } from "@/lib/article-feed";
 
 // Metadata Extraction
 
@@ -528,12 +529,13 @@ export async function loadMoreArticlesAction(
 ) {
   const supabase = await createClient();
   const offset = page * pageSize;
+  const MAX_FEED_CANDIDATES = 500;
 
   let query = supabase
     .from("articles")
     .select("*")
     .order("created_at", { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .limit(MAX_FEED_CANDIDATES);
 
   if (category) {
     query = query.eq("category", category);
@@ -546,7 +548,10 @@ export async function loadMoreArticlesAction(
     return { success: false, error: error.message, articles: [] };
   }
 
-  return { success: true, articles: articles || [] };
+  const mixedArticles = buildMixedArticleFeed(articles || []);
+  const paginated = mixedArticles.slice(offset, offset + pageSize);
+
+  return { success: true, articles: paginated };
 }
 
 export async function loadMoreCurriculumsAction(
