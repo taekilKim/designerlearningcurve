@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   FileText,
   BookOpen,
-  Settings,
+  FolderOpen,
   Home
 } from "lucide-react";
 
@@ -26,6 +26,11 @@ const navItems = [
     title: "커리큘럼 관리",
     href: "/admin/curriculums",
     icon: BookOpen,
+  },
+  {
+    title: "카테고리 관리",
+    href: "/admin/categories",
+    icon: FolderOpen,
   },
 ];
 

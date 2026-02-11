@@ -3,17 +3,28 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ArticleList } from "@/components/admin/article-list";
+import { BulkUpdateButton } from "@/components/admin/bulk-update-button";
 
 export default async function ArticlesPage() {
   const supabase = await createClient();
 
-  const { data: articles, error } = await supabase
-    .from("articles")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [
+    { data: articles, error: articlesError },
+    { data: categories }
+  ] = await Promise.all([
+    supabase
+      .from("articles")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_articles", true)
+      .order("display_order", { ascending: true })
+  ]);
 
-  if (error) {
-    console.error("Error fetching articles:", error);
+  if (articlesError) {
+    console.error("Error fetching articles:", articlesError);
   }
 
   return (
@@ -25,16 +36,19 @@ export default async function ArticlesPage() {
             모든 아티클을 관리하고 새로운 아티클을 추가하세요
           </p>
         </div>
-        <Link href="/admin/articles/new">
-          <Button size="lg">
-            <Plus className="mr-2 h-4 w-4" />
-            새 아티클 추가
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <BulkUpdateButton />
+          <Link href="/admin/articles/new">
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              새 아티클 추가
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {articles && articles.length > 0 ? (
-        <ArticleList articles={articles} />
+        <ArticleList articles={articles} categories={categories || []} />
       ) : (
         <div className="text-center py-12 border rounded-lg">
           <p className="text-muted-foreground mb-4">

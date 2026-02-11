@@ -6,12 +6,32 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { signOutAction } from "@/lib/auth-actions";
 
 export function GNB() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
+
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+      if (error) {
+        console.error("[GNB] Profile query error:", error.message);
+        return false;
+      }
+      return profile?.is_admin === true;
+    } catch (error) {
+      console.error("[GNB] Failed to fetch admin status:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,18 +40,12 @@ export function GNB() {
           data: { user },
         } = await supabase.auth.getUser();
         setUser(user);
-
-        // Check admin status
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        }
+        setIsAdmin(user ? await checkAdminStatus(user.id) : false);
       } catch (error) {
         console.error("[GNB] Failed to fetch user:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -40,32 +54,13 @@ export function GNB() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-
-      // Check admin status on auth change
-      if (session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("id", session.user.id)
-            .single();
-          setIsAdmin(profile?.is_admin === true);
-        } catch (error) {
-          console.error("[GNB] Failed to fetch admin status:", error);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setIsAdmin(currentUser ? await checkAdminStatus(currentUser.id) : false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
@@ -80,14 +75,14 @@ export function GNB() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold">
+          <Link href="/" className="text-xl font-bold cursor-pointer">
             <span className="hidden md:inline">Designer Learning Curve</span>
             <span className="md:hidden">DLC</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/curriculums"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+              className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                 pathname?.startsWith("/curriculums")
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -98,7 +93,7 @@ export function GNB() {
             {user && (
               <Link
                 href="/my-learning"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/my-learning")
                     ? "text-foreground"
                     : "text-muted-foreground"
@@ -107,10 +102,10 @@ export function GNB() {
                 내 학습
               </Link>
             )}
-            {isAdmin && (
+            {!isLoading && isAdmin && (
               <Link
                 href="/admin"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/admin")
                     ? "text-foreground"
                     : "text-muted-foreground"
@@ -127,16 +122,20 @@ export function GNB() {
               <span className="text-sm text-muted-foreground hidden md:block">
                 {user.email}
               </span>
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                className="hidden md:flex"
-              >
-                로그아웃
-              </Button>
+              <form action={signOutAction}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="hidden md:flex cursor-pointer"
+                >
+                  로그아웃
+                </Button>
+              </form>
             </>
           ) : (
-            <Button onClick={handleSignIn} className="hidden md:flex">로그인</Button>
+            <Button onClick={handleSignIn} className="hidden md:flex cursor-pointer">
+              로그인
+            </Button>
           )}
         </div>
       </div>

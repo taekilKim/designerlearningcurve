@@ -2,17 +2,23 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Edit, Trash2, ExternalLink } from "lucide-react";
-import { deleteArticleAction } from "./actions";
-import { toast } from "sonner";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +29,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Edit, Trash2, ExternalLink } from "lucide-react";
+import { deleteArticleAction, updateArticleAction } from "./actions";
+import { toast } from "sonner";
 
 interface Article {
   id: string;
@@ -32,16 +41,47 @@ interface Article {
   thumbnail_url: string | null;
   author: string | null;
   published_at: string | null;
+  category: string | null;
   created_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  label: string;
+  icon: string;
 }
 
 interface ArticleListProps {
   articles: Article[];
+  categories: Category[];
 }
 
-export function ArticleList({ articles }: ArticleListProps) {
+export function ArticleList({ articles, categories }: ArticleListProps) {
+  const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [updatingCategory, setUpdatingCategory] = useState<string | null>(null);
+
+  const handleCategoryChange = async (articleId: string, newCategory: string) => {
+    setUpdatingCategory(articleId);
+    try {
+      const result = await updateArticleAction(articleId, {
+        category: newCategory === "none" ? null : newCategory,
+      });
+
+      if (result.success) {
+        toast.success("카테고리가 변경되었습니다.");
+        router.refresh();
+      } else {
+        toast.error(result.error || "카테고리 변경에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("카테고리 변경 중 오류가 발생했습니다.");
+    } finally {
+      setUpdatingCategory(null);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
@@ -50,6 +90,7 @@ export function ArticleList({ articles }: ArticleListProps) {
       if (result.success) {
         toast.success("아티클이 삭제되었습니다.");
         setDeleteId(null);
+        router.refresh();
       } else {
         toast.error(result.error || "삭제 중 오류가 발생했습니다.");
       }
@@ -60,59 +101,129 @@ export function ArticleList({ articles }: ArticleListProps) {
     }
   };
 
+  const handleRowClick = (articleId: string, e: React.MouseEvent) => {
+    // Ignore clicks on buttons, links, and select elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("[role='combobox']") ||
+      target.closest(".select-trigger")
+    ) {
+      return;
+    }
+    router.push(`/admin/articles/${articleId}/edit`);
+  };
+
   return (
     <>
-      <div className="grid grid-cols-1 gap-4">
-        {articles.map((article) => (
-          <Card key={article.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="mb-2">{article.title}</CardTitle>
-                  {article.description && (
-                    <CardDescription>{article.description}</CardDescription>
-                  )}
-                  {article.author && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      by {article.author}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                  >
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40%]">제목</TableHead>
+              <TableHead className="w-[120px]">작성자</TableHead>
+              <TableHead className="w-[150px]">카테고리</TableHead>
+              <TableHead className="w-[110px]">등록일</TableHead>
+              <TableHead className="w-[150px]">작업</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {articles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  등록된 아티클이 없습니다.
+                </TableCell>
+              </TableRow>
+            ) : (
+              articles.map((article) => (
+                <TableRow
+                  key={article.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={(e) => handleRowClick(article.id, e)}
+                >
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium line-clamp-1">
+                        {article.title}
+                      </div>
+                      {article.description && (
+                        <div className="text-sm text-muted-foreground line-clamp-1">
+                          {article.description}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {article.author || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={article.category || "none"}
+                      onValueChange={(value) => handleCategoryChange(article.id, value)}
+                      disabled={updatingCategory === article.id}
                     >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                  >
-                    <Link href={`/admin/articles/${article.id}/edit`}>
-                      <Edit className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDeleteId(article.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
+                      <SelectTrigger className="select-trigger w-[160px]">
+                        <SelectValue placeholder="카테고리 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">없음</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.icon} {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(article.created_at).toLocaleDateString("ko-KR")}
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                      >
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                      >
+                        <Link href={`/admin/articles/${article.id}/edit`}>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(article.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

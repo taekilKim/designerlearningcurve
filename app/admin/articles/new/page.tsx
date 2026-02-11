@@ -1,6 +1,14 @@
+import { createClient } from "@/lib/supabase/server";
 import { ArticleForm } from "@/components/admin/article-form";
 
-export default function NewArticlePage() {
+export default async function NewArticlePage() {
+  const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("for_articles", true)
+    .order("display_order", { ascending: true });
+
   return (
     <div>
       <div className="mb-8">
@@ -10,7 +18,7 @@ export default function NewArticlePage() {
         </p>
       </div>
 
-      <ArticleForm mode="create" />
+      <ArticleForm mode="create" categories={categories || []} />
     </div>
   );
 }

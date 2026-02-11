@@ -49,6 +49,19 @@ body {
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
 
+/* 모바일에서만 touch-action 적용 */
+@media (max-width: 768px) {
+  body {
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+  }
+
+  html {
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -122,6 +135,7 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -242,4 +256,18 @@ body {
 /* Focus styles */
 .ProseMirror:focus {
   outline: none;
+}
+
+/* 모바일에서만 iOS 자동 줌 방지 */
+@media (max-width: 768px) {
+  .ProseMirror {
+    font-size: 16px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important;
+  }
 }

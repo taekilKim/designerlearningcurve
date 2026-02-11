@@ -1,61 +1,92 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { ArticleCard } from "@/components/home/article-card";
+import { CategorySidebar } from "@/components/shared/category-sidebar";
+import { ArticleListInfinite } from "@/components/home/article-list-infinite";
 
 export const dynamic = 'force-dynamic';
 
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  thumbnail_url: string;
-  author: string;
-  published_at: string;
-}
+export const metadata: Metadata = {
+  title: "아티클 큐레이션",
+  description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  openGraph: {
+    title: "아티클 큐레이션 | Designer Learning Curve",
+    description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  },
+};
 
-export default async function Home() {
+const PAGE_SIZE = 12;
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: { category?: string };
+}) {
   const supabase = await createClient();
+  const { category } = await searchParams;
 
-  const { data: articles, error } = await supabase
+  // Build article query
+  let articlesQuery = supabase
     .from("articles")
     .select("*")
-    .order("published_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(PAGE_SIZE);
 
-  if (error) {
-    console.error("Error fetching articles:", error);
+  if (category) {
+    articlesQuery = articlesQuery.eq("category", category);
   }
 
+  // Fetch articles and categories in parallel
+  const [
+    { data: articles, error: articlesError },
+    { data: categories }
+  ] = await Promise.all([
+    articlesQuery,
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("for_articles", true)
+      .order("display_order", { ascending: true })
+  ]);
+
+  if (articlesError) {
+    console.error("Error fetching articles:", articlesError);
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Designer Learning Curve",
+    url: "https://designpath.vercel.app",
+    description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
+  };
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold mb-4">아티클 큐레이션</h1>
-        <p className="text-lg text-muted-foreground">
-          디자이너를 위한 엄선된 아티클을 탐색해보세요
-        </p>
-      </div>
+    <div className="w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar */}
+          <CategorySidebar type="articles" categories={categories || []} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles?.map((article: Article) => (
-          <ArticleCard key={article.id} article={article} />
-        ))}
-      </div>
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">아티클 큐레이션</h1>
+              <p className="text-muted-foreground">
+                디자이너를 위한 엄선된 아티클을 탐색해보세요
+              </p>
+            </div>
 
-      {(!articles || articles.length === 0) && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            아직 등록된 아티클이 없습니다.
-          </p>
+            {/* Infinite Scroll Article List */}
+            <ArticleListInfinite
+              initialArticles={articles || []}
+              category={category}
+            />
+          </div>
         </div>
-      )}
-
-      <div className="mt-16 text-center">
-        <Link
-          href="/curriculums"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
-        >
-          커리큘럼 둘러보기
-        </Link>
       </div>
     </div>
   );
