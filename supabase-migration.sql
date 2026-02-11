@@ -313,6 +313,41 @@ CREATE POLICY "Users can delete own learning_notes"
 
 -- 8. 인덱스 생성 (성능 최적화)
 -- ============================================
+CREATE OR REPLACE FUNCTION public.normalize_article_url(raw_url TEXT)
+RETURNS TEXT
+LANGUAGE SQL
+IMMUTABLE
+RETURNS NULL ON NULL INPUT
+AS $$
+  SELECT
+    regexp_replace(
+      regexp_replace(
+        regexp_replace(
+          regexp_replace(
+            regexp_replace(
+              regexp_replace(trim(raw_url), '#.*$', ''),
+              '([?&])(utm_[^=&]+|fbclid|gclid|igshid|mc_cid|mc_eid|ref|ref_src|si)=[^&]*',
+              '\1',
+              'gi'
+            ),
+            '/+$',
+            '',
+            'g'
+          ),
+          '\?&',
+          '?',
+          'g'
+        ),
+        '&{2,}',
+        '&',
+        'g'
+      ),
+      '([?&])$',
+      '',
+      'g'
+    )
+$$;
+
 CREATE INDEX IF NOT EXISTS idx_curriculum_items_curriculum_id ON curriculum_items(curriculum_id);
 CREATE INDEX IF NOT EXISTS idx_curriculum_items_article_id ON curriculum_items(article_id);
 CREATE INDEX IF NOT EXISTS idx_curriculum_items_sequence ON curriculum_items(curriculum_id, sequence);
@@ -320,6 +355,8 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_user_id ON enrollments(user_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_curriculum_id ON enrollments(curriculum_id);
 CREATE INDEX IF NOT EXISTS idx_completed_items_enrollment_id ON completed_items(enrollment_id);
 CREATE INDEX IF NOT EXISTS idx_learning_notes_enrollment_id ON learning_notes(enrollment_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_normalized_url_unique
+  ON articles (normalize_article_url(url));
 
 
 -- 9. 트리거 함수 (updated_at 자동 업데이트)

@@ -77,6 +77,42 @@ CREATE TABLE IF NOT EXISTS learning_notes (
   UNIQUE(enrollment_id, curriculum_item_id)
 );
 
+-- Function to normalize article URLs for deduplication
+CREATE OR REPLACE FUNCTION public.normalize_article_url(raw_url TEXT)
+RETURNS TEXT
+LANGUAGE SQL
+IMMUTABLE
+RETURNS NULL ON NULL INPUT
+AS $$
+  SELECT
+    regexp_replace(
+      regexp_replace(
+        regexp_replace(
+          regexp_replace(
+            regexp_replace(
+              regexp_replace(trim(raw_url), '#.*$', ''),
+              '([?&])(utm_[^=&]+|fbclid|gclid|igshid|mc_cid|mc_eid|ref|ref_src|si)=[^&]*',
+              '\1',
+              'gi'
+            ),
+            '/+$',
+            '',
+            'g'
+          ),
+          '\?&',
+          '?',
+          'g'
+        ),
+        '&{2,}',
+        '&',
+        'g'
+      ),
+      '([?&])$',
+      '',
+      'g'
+    )
+$$;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_curriculum_items_curriculum_id ON curriculum_items(curriculum_id);
 CREATE INDEX IF NOT EXISTS idx_curriculum_items_sequence ON curriculum_items(curriculum_id, sequence);
@@ -85,6 +121,8 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_curriculum_id ON enrollments(curricul
 CREATE INDEX IF NOT EXISTS idx_completed_items_enrollment_id ON completed_items(enrollment_id);
 CREATE INDEX IF NOT EXISTS idx_learning_notes_enrollment_id ON learning_notes(enrollment_id);
 CREATE INDEX IF NOT EXISTS idx_learning_notes_curriculum_item_id ON learning_notes(curriculum_item_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_normalized_url_unique
+  ON articles (normalize_article_url(url));
 
 -- Row Level Security (RLS) Policies
 

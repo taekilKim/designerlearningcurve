@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
+import { normalizeArticleUrl } from "@/lib/article-url";
 
 // Article Actions
 
@@ -21,17 +22,37 @@ export async function createArticleAction(formData: {
   }
 
   const supabase = await createClient();
+  const normalizedUrl = normalizeArticleUrl(formData.url);
+
+  const { data: existingArticle } = await supabase
+    .from("articles")
+    .select("id")
+    .eq("url", normalizedUrl)
+    .maybeSingle();
+
+  if (existingArticle) {
+    return {
+      success: false,
+      error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
+    };
+  }
 
   const { error } = await supabase.from("articles").insert({
     title: formData.title,
     description: formData.description || null,
-    url: formData.url,
+    url: normalizedUrl,
     thumbnail_url: formData.thumbnail_url || null,
     author: formData.author || null,
     published_at: formData.published_at || null,
   });
 
   if (error) {
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
+      };
+    }
     console.error("Error creating article:", error);
     return { success: false, error: error.message };
   }
@@ -59,13 +80,28 @@ export async function updateArticleAction(
   }
 
   const supabase = await createClient();
+  const normalizedUrl = normalizeArticleUrl(formData.url);
+
+  const { data: existingArticle } = await supabase
+    .from("articles")
+    .select("id")
+    .eq("url", normalizedUrl)
+    .neq("id", id)
+    .maybeSingle();
+
+  if (existingArticle) {
+    return {
+      success: false,
+      error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
+    };
+  }
 
   const { error } = await supabase
     .from("articles")
     .update({
       title: formData.title,
       description: formData.description || null,
-      url: formData.url,
+      url: normalizedUrl,
       thumbnail_url: formData.thumbnail_url || null,
       author: formData.author || null,
       published_at: formData.published_at || null,
@@ -73,6 +109,12 @@ export async function updateArticleAction(
     .eq("id", id);
 
   if (error) {
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
+      };
+    }
     console.error("Error updating article:", error);
     return { success: false, error: error.message };
   }
