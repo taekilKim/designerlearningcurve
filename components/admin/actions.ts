@@ -568,6 +568,36 @@ type SourcePreview = {
   sampleItems: string[];
 };
 
+function sanitizeKeywords(keywords?: string[]): string[] {
+  if (!keywords) return [];
+  return keywords
+    .map((keyword) => keyword.trim())
+    .filter(Boolean)
+    .filter((keyword, index, arr) => arr.indexOf(keyword) === index);
+}
+
+function resolveSourceUrlWithKeyword(url: string, keywords?: string[]): string {
+  if (!url.includes("{keyword}")) return url;
+  const firstKeyword = sanitizeKeywords(keywords)[0];
+  if (!firstKeyword) return url;
+  return url.replaceAll("{keyword}", encodeURIComponent(firstKeyword));
+}
+
+function normalizeSourceUrl(url: string, keywords?: string[]): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.includes("{keyword}")) {
+    const resolved = resolveSourceUrlWithKeyword(trimmed, keywords);
+    if (resolved.includes("{keyword}")) return null;
+    const normalizedResolved = normalizeArticleUrl(resolved);
+    if (!normalizedResolved) return null;
+    return trimmed;
+  }
+
+  return normalizeArticleUrl(trimmed);
+}
+
 function parseSourcePreview(xmlOrHtml: string): SourcePreview {
   const $xml = cheerio.load(xmlOrHtml, { xmlMode: true });
   const rssTitle = $xml("rss > channel > title").first().text().trim();
@@ -614,11 +644,16 @@ function parseSourcePreview(xmlOrHtml: string): SourcePreview {
   };
 }
 
-export async function previewArticleSourceAction(url: string) {
+export async function previewArticleSourceAction(url: string, keywords?: string[]) {
   const adminStatus = await isAdmin();
   if (!adminStatus) return { success: false, error: "권한이 없습니다." };
 
-  const normalizedUrl = normalizeArticleUrl(url);
+  if (url.includes("{keyword}") && sanitizeKeywords(keywords).length === 0) {
+    return { success: false, error: "키워드 템플릿 URL에는 키워드를 1개 이상 입력해주세요." };
+  }
+
+  const resolvedUrl = resolveSourceUrlWithKeyword(url, keywords);
+  const normalizedUrl = normalizeArticleUrl(resolvedUrl);
   if (!normalizedUrl) return { success: false, error: "URL이 유효하지 않습니다." };
 
   try {
@@ -683,13 +718,15 @@ export async function createArticleSourceAction(data: {
   url: string;
   category?: string;
   is_active?: boolean;
+  keywords?: string[];
 }) {
   const adminStatus = await isAdmin();
   if (!adminStatus) return { success: false, error: "권한이 없습니다." };
 
   const supabase = await createClient();
-  const normalizedUrl = normalizeArticleUrl(data.url);
+  const normalizedUrl = normalizeSourceUrl(data.url, data.keywords);
   if (!normalizedUrl) return { success: false, error: "유효한 URL이 아닙니다." };
+  const keywords = sanitizeKeywords(data.keywords);
 
   const { data: source, error } = await supabase
     .from("article_sources")
@@ -699,6 +736,7 @@ export async function createArticleSourceAction(data: {
       category: data.category?.trim() || "프로덕트 디자인",
       is_active: data.is_active ?? true,
       source_type: "manual",
+      keywords,
     })
     .select("*")
     .single();
@@ -713,7 +751,7 @@ export async function createArticleSourceAction(data: {
 
 export async function updateArticleSourceAction(
   id: string,
-  data: { is_active?: boolean; name?: string; category?: string }
+  data: { is_active?: boolean; name?: string; category?: string; keywords?: string[] }
 ) {
   const adminStatus = await isAdmin();
   if (!adminStatus) return { success: false, error: "권한이 없습니다." };
@@ -723,6 +761,7 @@ export async function updateArticleSourceAction(
   if (data.is_active !== undefined) updateData.is_active = data.is_active;
   if (data.name !== undefined) updateData.name = data.name.trim();
   if (data.category !== undefined) updateData.category = data.category.trim();
+  if (data.keywords !== undefined) updateData.keywords = sanitizeKeywords(data.keywords);
 
   const { error } = await supabase
     .from("article_sources")

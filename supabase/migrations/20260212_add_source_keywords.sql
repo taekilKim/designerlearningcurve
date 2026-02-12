@@ -1,0 +1,2 @@
+ALTER TABLE article_sources
+ADD COLUMN IF NOT EXISTS keywords TEXT[] NOT NULL DEFAULT '{}';

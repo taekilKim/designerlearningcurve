@@ -35,6 +35,7 @@ interface Source {
   name: string;
   url: string;
   category: string;
+  keywords: string[] | null;
   is_active: boolean;
   source_type: string;
   created_at: string;
@@ -61,6 +62,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
     name: "",
     url: "",
     category: "프로덕트 디자인",
+    keywords: "",
   });
 
   const handlePreview = async () => {
@@ -71,7 +73,11 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
 
     setPreviewLoading(true);
     try {
-      const result = await previewArticleSourceAction(form.url.trim());
+      const keywords = form.keywords
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter(Boolean);
+      const result = await previewArticleSourceAction(form.url.trim(), keywords);
       if (!result.success || !result.data) {
         toast.error(result.error || "메타데이터를 불러오지 못했습니다.");
         return;
@@ -97,6 +103,10 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
       url: form.url.trim(),
       category: form.category.trim() || "프로덕트 디자인",
       is_active: true,
+      keywords: form.keywords
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter(Boolean),
     });
 
     if (!result.success) {
@@ -107,7 +117,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
     if ("source" in result && result.source) {
       setSources((prev) => [result.source, ...prev]);
     }
-    setForm({ name: "", url: "", category: "프로덕트 디자인" });
+    setForm({ name: "", url: "", category: "프로덕트 디자인", keywords: "" });
     setPreview(null);
     toast.success("소스가 추가되었습니다.");
   };
@@ -153,7 +163,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
     <div className="space-y-6">
       <div className="rounded-lg border p-4 space-y-3">
         <h2 className="text-lg font-semibold">새 수집 소스 추가</h2>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <Input
             placeholder="소스 이름"
             value={form.name}
@@ -169,7 +179,16 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
             value={form.url}
             onChange={(e) => setForm((prev) => ({ ...prev, url: e.target.value }))}
           />
+          <Input
+            placeholder="키워드 (쉼표 구분) 예: UXUI,figma,디자인"
+            value={form.keywords}
+            onChange={(e) => setForm((prev) => ({ ...prev, keywords: e.target.value }))}
+          />
         </div>
+        <p className="text-xs text-muted-foreground">
+          같은 소스에서 키워드별 수집이 필요하면 URL에 <code>{"{keyword}"}</code>를 넣고 키워드를 입력하세요.
+          예: <code>https://v2.velog.io/rss/tag/{"{keyword}"}</code>
+        </p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handlePreview} disabled={previewLoading}>
             {previewLoading ? "확인 중..." : "메타데이터 확인"}
@@ -201,6 +220,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
               <TableHead>이름</TableHead>
               <TableHead>URL</TableHead>
               <TableHead>카테고리</TableHead>
+              <TableHead>키워드</TableHead>
               <TableHead>활성</TableHead>
               <TableHead>타입</TableHead>
               <TableHead className="w-[80px]">삭제</TableHead>
@@ -209,7 +229,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
           <TableBody>
             {sources.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   등록된 소스가 없습니다.
                 </TableCell>
               </TableRow>
@@ -219,6 +239,11 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
                   <TableCell>{source.name}</TableCell>
                   <TableCell className="max-w-[420px] truncate">{source.url}</TableCell>
                   <TableCell>{source.category}</TableCell>
+                  <TableCell className="max-w-[220px] truncate">
+                    {source.keywords && source.keywords.length > 0
+                      ? source.keywords.join(", ")
+                      : "-"}
+                  </TableCell>
                   <TableCell>
                     <button
                       type="button"

@@ -19,22 +19,52 @@ interface RssSource {
   category: string;
 }
 
+function sanitizeKeywords(keywords?: string[] | null): string[] {
+  if (!keywords) return [];
+  return keywords
+    .map((keyword) => keyword.trim())
+    .filter(Boolean)
+    .filter((keyword, index, arr) => arr.indexOf(keyword) === index);
+}
+
+function expandSourceByKeywords(source: {
+  name: string;
+  url: string;
+  category: string | null;
+  keywords?: string[] | null;
+}): RssSource[] {
+  const category = source.category || "프로덕트 디자인";
+  const keywords = sanitizeKeywords(source.keywords);
+
+  if (!source.url.includes("{keyword}") || keywords.length === 0) {
+    return [{ name: source.name, url: source.url, category }];
+  }
+
+  return keywords.map((keyword) => ({
+    name: `${source.name} [${keyword}]`,
+    url: source.url.replaceAll("{keyword}", encodeURIComponent(keyword)),
+    category,
+  }));
+}
+
 async function loadConfiguredSources(supabase: ReturnType<typeof createAdminClient>): Promise<RssSource[]> {
   const { data, error } = await supabase
     .from("article_sources")
-    .select("name, url, category")
+    .select("name, url, category, keywords")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
 
-  return data
-    .map((row) => ({
-      name: row.name,
-      url: row.url,
-      category: row.category || "프로덕트 디자인",
-    }))
-    .filter((row) => Boolean(row.url));
+  const expanded = data.flatMap((row) => expandSourceByKeywords(row));
+  const uniqueByUrl = new Map<string, RssSource>();
+  for (const source of expanded) {
+    const normalizedUrl = normalizeArticleUrl(source.url);
+    if (!normalizedUrl) continue;
+    if (uniqueByUrl.has(normalizedUrl)) continue;
+    uniqueByUrl.set(normalizedUrl, { ...source, url: normalizedUrl });
+  }
+  return [...uniqueByUrl.values()];
 }
 
 interface ArticleData {
