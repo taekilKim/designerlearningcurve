@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS article_sources (
   url TEXT NOT NULL UNIQUE,
   category TEXT,
   keywords TEXT[] NOT NULL DEFAULT '{}',
-  source_type TEXT NOT NULL DEFAULT 'manual',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
