@@ -9,25 +9,18 @@ export const maxDuration = 60;
 const TARGET_INSERT_COUNT = 10;
 const MAX_PER_SOURCE_FIRST_PASS = 1;
 const MAX_PER_SOURCE_SECOND_PASS = 2;
+const BRUNCH_PROFILE_SOURCE_LIMIT = 30;
 
 const NOTIFY_EMAIL = "taekil.design@gmail.com";
 
-// RSS feeds — 디자인 테크닉/학습 중심, 국내 소스 우선
-const RSS_SOURCES = [
-  // ── 브런치 (디자인 원리/테크닉 키워드) ──
-  { name: "브런치 UI디자인", url: "https://brunch.co.kr/rss/keyword/UI%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
-  { name: "브런치 UX디자인", url: "https://brunch.co.kr/rss/keyword/UX%EB%94%94%EC%9E%90%EC%9D%B8", category: "UX 디자인" },
-  { name: "브런치 디자인시스템", url: "https://brunch.co.kr/rss/keyword/%EB%94%94%EC%9E%90%EC%9D%B8%EC%8B%9C%EC%8A%A4%ED%85%9C", category: "디자인 시스템" },
-  { name: "브런치 타이포그래피", url: "https://brunch.co.kr/rss/keyword/%ED%83%80%EC%9D%B4%ED%8F%AC%EA%B7%B8%EB%9E%98%ED%94%BC", category: "타이포그래피" },
-  { name: "브런치 컬러", url: "https://brunch.co.kr/rss/keyword/%EC%BB%AC%EB%9F%AC%EB%94%94%EC%9E%90%EC%9D%B8", category: "컬러 이론" },
-  { name: "브런치 레이아웃", url: "https://brunch.co.kr/rss/keyword/%EB%A0%88%EC%9D%B4%EC%95%84%EC%9B%83", category: "레이아웃" },
-  { name: "브런치 피그마", url: "https://brunch.co.kr/rss/keyword/%ED%94%BC%EA%B7%B8%EB%A7%88", category: "피그마 실무" },
-  { name: "브런치 아이콘", url: "https://brunch.co.kr/rss/keyword/%EC%95%84%EC%9D%B4%EC%BD%98%EB%94%94%EC%9E%90%EC%9D%B8", category: "아이콘 디자인" },
-  { name: "브런치 반응형", url: "https://brunch.co.kr/rss/keyword/%EB%B0%98%EC%9D%91%ED%98%95%EB%94%94%EC%9E%90%EC%9D%B8", category: "반응형 디자인" },
-  { name: "브런치 사용자리서치", url: "https://brunch.co.kr/rss/keyword/%EC%82%AC%EC%9A%A9%EC%9E%90%EB%A6%AC%EC%84%9C%EC%B9%98", category: "사용자 리서치" },
-  { name: "브런치 인터랙션", url: "https://brunch.co.kr/rss/keyword/%EC%9D%B8%ED%84%B0%EB%9E%99%EC%85%98%EB%94%94%EC%9E%90%EC%9D%B8", category: "인터랙션 디자인" },
-  { name: "브런치 프로덕트디자인", url: "https://brunch.co.kr/rss/keyword/%ED%94%84%EB%A1%9C%EB%8D%95%ED%8A%B8%EB%94%94%EC%9E%90%EC%9D%B8", category: "프로덕트 디자인" },
+interface RssSource {
+  name: string;
+  url: string;
+  category: string;
+}
 
+// RSS feeds — 디자인 테크닉/학습 중심, 국내 소스 우선
+const STATIC_RSS_SOURCES: RssSource[] = [
   // ── 국내 디자인 커뮤니티 & 매거진 ──
   { name: "서핏 매거진", url: "https://mag.surfit.io/feed", category: "프로덕트 디자인" },
   { name: "요즘IT", url: "https://yozm.wishket.com/magazine/feed/", category: "프로덕트 디자인" },
@@ -260,10 +253,106 @@ async function extractOGMetadata(url: string): Promise<Partial<ArticleData>> {
   } catch { return {}; }
 }
 
-async function fetchFromRSS(): Promise<ArticleData[]> {
+function extractBrunchProfilePath(articleUrl: string): string | null {
+  try {
+    const u = new URL(articleUrl);
+    if (u.hostname !== "brunch.co.kr") return null;
+    const path = u.pathname.trim();
+    const match = path.match(/^\/(@@?[A-Za-z0-9_-]+)/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseProfileRssSource(
+  html: string,
+  fallbackName: string,
+  fallbackCategory: string
+): RssSource | null {
+  const $ = cheerio.load(html);
+  const rssHref = $('link[rel="alternate"][type="application/rss+xml"]').attr("href");
+  if (!rssHref) return null;
+
+  const resolvedUrl = new URL(rssHref, "https://brunch.co.kr").toString();
+  const authorName =
+    $('meta[property="article:author"]').attr("content") ||
+    $('meta[name="author"]').attr("content") ||
+    $("title").first().text().replace("의 브런치스토리", "").trim() ||
+    fallbackName;
+
+  return {
+    name: `브런치 ${authorName}`,
+    url: resolvedUrl,
+    category: fallbackCategory,
+  };
+}
+
+async function buildBrunchSourcesFromExisting(supabase: ReturnType<typeof createAdminClient>) {
+  const { data: brunchArticles } = await supabase
+    .from("articles")
+    .select("url, category")
+    .ilike("url", "%brunch.co.kr/%")
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (!brunchArticles || brunchArticles.length === 0) return [];
+
+  const categoryByProfile = new Map<string, Map<string, number>>();
+  const profilePaths: string[] = [];
+  const seenProfiles = new Set<string>();
+
+  for (const article of brunchArticles) {
+    const profilePath = extractBrunchProfilePath(article.url);
+    if (!profilePath) continue;
+
+    if (!seenProfiles.has(profilePath)) {
+      profilePaths.push(profilePath);
+      seenProfiles.add(profilePath);
+    }
+
+    const category = article.category || "프로덕트 디자인";
+    const categoryMap = categoryByProfile.get(profilePath) ?? new Map<string, number>();
+    categoryMap.set(category, (categoryMap.get(category) ?? 0) + 1);
+    categoryByProfile.set(profilePath, categoryMap);
+  }
+
+  const topProfiles = profilePaths.slice(0, BRUNCH_PROFILE_SOURCE_LIMIT);
+  const results = await Promise.allSettled(
+    topProfiles.map(async (profilePath) => {
+      const profileUrl = `https://brunch.co.kr/${profilePath}`;
+      const res = await fetch(profileUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; ArticleBot/1.0)" },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) return null;
+      const html = await res.text();
+
+      const categoryMap = categoryByProfile.get(profilePath);
+      const fallbackCategory =
+        categoryMap && categoryMap.size > 0
+          ? [...categoryMap.entries()].sort((a, b) => b[1] - a[1])[0][0]
+          : "프로덕트 디자인";
+
+      return parseProfileRssSource(html, profilePath, fallbackCategory);
+    })
+  );
+
+  const sources: RssSource[] = [];
+  const seenUrls = new Set<string>();
+  for (const result of results) {
+    if (result.status !== "fulfilled" || !result.value) continue;
+    if (seenUrls.has(result.value.url)) continue;
+    seenUrls.add(result.value.url);
+    sources.push(result.value);
+  }
+  return sources;
+}
+
+async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
   const allArticles: ArticleData[] = [];
   const results = await Promise.allSettled(
-    RSS_SOURCES.map(async (source) => {
+    sources.map(async (source) => {
       try {
         const res = await fetch(source.url, {
           headers: { "User-Agent": "Mozilla/5.0 (compatible; ArticleBot/1.0)" },
@@ -317,9 +406,11 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createAdminClient();
+    const brunchProfileSources = await buildBrunchSourcesFromExisting(supabase);
+    const sources: RssSource[] = [...brunchProfileSources, ...STATIC_RSS_SOURCES];
 
     // 1. RSS 수집
-    let candidates = await fetchFromRSS();
+    let candidates = await fetchFromRSS(sources);
 
     // 2. URL 정규화 + 배치 내 중복 제거
     //    같은 아티클이 파라미터/앵커만 다른 URL로 반복 수집되는 문제 방지
@@ -453,6 +544,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true, inserted: insertedCount,
       candidates: candidates.length,
+      sources_used: sources.length,
+      brunch_profile_sources: brunchProfileSources.length,
       articles: insertedArticles.map((a) => ({ title: a.title, url: a.url, category: a.category })),
     });
   } catch (error) {
