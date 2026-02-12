@@ -129,7 +129,9 @@ function classifyCategory(title: string, desc: string, fallback: string): string
 
 // 디자인 테크닉/학습 관련성 판단 + 도구 비중 조절
 function scoreRelevance(article: ArticleData): number {
-  const text = `${article.title} ${article.description}`.toLowerCase();
+  const title = article.title.toLowerCase();
+  const description = article.description.toLowerCase();
+  const text = `${title} ${description}`;
 
   // 높은 점수: 디자인 원리/테크닉/리서치
   const highPriority = [
@@ -159,6 +161,22 @@ function scoreRelevance(article: ArticleData): number {
     "ai 도구", "신기능", "트렌드", "전망", "예측",
   ];
 
+  // 실무형/프로세스형 강한 신호
+  const practicalSignals = [
+    "프로세스", "단계", "프레임워크", "체크리스트", "가이드",
+    "사례", "케이스", "적용", "실무", "문제 해결",
+    "문제정의", "ux 리서치", "사용자 조사", "리서치",
+    "디자인 시스템", "컴포넌트", "원칙", "휴리스틱",
+    "더블 다이아몬드", "lean ux",
+  ];
+
+  // 얕은 큐레이션/트렌드 요약형 신호
+  const shallowSignals = [
+    "트렌드 총정리", "총정리", "추천 사이트", "레퍼런스 사이트",
+    "사이트 모음", "핫한", "도구 소개", "툴 소개", "best", "top",
+    "순위", "랭킹", "요약", "살펴보기", "한눈에", "정리",
+  ];
+
   let score = 0;
 
   // 개발 전용 글 제외 (-10점 → 사실상 필터링)
@@ -173,7 +191,22 @@ function scoreRelevance(article: ArticleData): number {
   ];
   if (devOnly.some((kw) => text.includes(kw))) score -= 10;
   for (const kw of highPriority) if (text.includes(kw)) score += 3;
-  for (const kw of lowPriority) if (text.includes(kw)) score -= 1;
+  for (const kw of lowPriority) if (text.includes(kw)) score -= 2;
+  for (const kw of shallowSignals) if (text.includes(kw)) score -= 3;
+
+  const practicalCount = practicalSignals.filter((kw) => text.includes(kw)).length;
+  score += practicalCount * 2;
+
+  const hasYearInTitle = /\b20\d{2}\b/.test(title);
+  const hasTrendishTitle =
+    title.includes("트렌드") ||
+    title.includes("총정리") ||
+    title.includes("전망") ||
+    title.includes("추천") ||
+    title.includes("도구");
+  if (hasYearInTitle && hasTrendishTitle && practicalCount === 0) {
+    score -= 6;
+  }
 
   // 기본 관련성 체크
   const baseKeywords = ["ux", "ui", "디자인", "figma", "피그마", "프로덕트"];
@@ -467,8 +500,9 @@ export async function GET(request: Request) {
     }
     candidates = [...uniqueByKey.values()];
 
-    // 3. 관련성 스코어링 (0 이하 제외)
-    candidates = candidates.filter((a) => scoreRelevance(a) > 0);
+    // 3. 관련성 스코어링 (실무형 중심으로 기준 상향)
+    const MIN_RELEVANCE_SCORE = 6;
+    candidates = candidates.filter((a) => scoreRelevance(a) >= MIN_RELEVANCE_SCORE);
 
     // 4. 기존 데이터 기준 중복 제거 (URL + 소스별 제목 키)
     const { data: existing } = await supabase.from("articles").select("url,title");
