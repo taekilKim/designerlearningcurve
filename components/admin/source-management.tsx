@@ -28,7 +28,7 @@ import {
   previewArticleSourceAction,
   updateArticleSourceAction,
 } from "./actions";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface Source {
   id: string;
@@ -56,12 +56,19 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
   const [sources, setSources] = useState<Source[]>(initialSources);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [form, setForm] = useState({
     name: "",
     url: "",
     category: "프로덕트 디자인",
+    keywords: "",
+  });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    url: "",
+    category: "",
     keywords: "",
   });
 
@@ -137,6 +144,55 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
         )
       );
       toast.success(next ? "소스가 활성화되었습니다." : "소스가 비활성화되었습니다.");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleStartEdit = (source: Source) => {
+    setEditingId(source.id);
+    setEditForm({
+      name: source.name,
+      url: source.url,
+      category: source.category || "",
+      keywords: source.keywords?.join(", ") || "",
+    });
+  };
+
+  const handleSaveEdit = async (source: Source) => {
+    setLoadingId(source.id);
+    try {
+      const keywords = editForm.keywords
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter(Boolean);
+
+      const result = await updateArticleSourceAction(source.id, {
+        name: editForm.name.trim(),
+        url: editForm.url.trim(),
+        category: editForm.category.trim() || "프로덕트 디자인",
+        keywords,
+      });
+      if (!result.success) {
+        toast.error(result.error || "소스 수정에 실패했습니다.");
+        return;
+      }
+
+      setSources((prev) =>
+        prev.map((item) =>
+          item.id === source.id
+            ? {
+                ...item,
+                name: editForm.name.trim(),
+                url: editForm.url.trim(),
+                category: editForm.category.trim() || "프로덕트 디자인",
+                keywords,
+              }
+            : item
+        )
+      );
+      setEditingId(null);
+      toast.success("소스가 수정되었습니다.");
     } finally {
       setLoadingId(null);
     }
@@ -223,7 +279,7 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
               <TableHead>키워드</TableHead>
               <TableHead>활성</TableHead>
               <TableHead>타입</TableHead>
-              <TableHead className="w-[80px]">삭제</TableHead>
+              <TableHead className="w-[140px]">작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -236,13 +292,56 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
             ) : (
               sources.map((source) => (
                 <TableRow key={source.id}>
-                  <TableCell>{source.name}</TableCell>
-                  <TableCell className="max-w-[420px] truncate">{source.url}</TableCell>
-                  <TableCell>{source.category}</TableCell>
+                  <TableCell>
+                    {editingId === source.id ? (
+                      <Input
+                        value={editForm.name}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                        }
+                      />
+                    ) : (
+                      source.name
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-[420px]">
+                    {editingId === source.id ? (
+                      <Input
+                        value={editForm.url}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, url: e.target.value }))
+                        }
+                      />
+                    ) : (
+                      <div className="truncate">{source.url}</div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {editingId === source.id ? (
+                      <Input
+                        value={editForm.category}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, category: e.target.value }))
+                        }
+                      />
+                    ) : (
+                      source.category
+                    )}
+                  </TableCell>
                   <TableCell className="max-w-[220px] truncate">
-                    {source.keywords && source.keywords.length > 0
-                      ? source.keywords.join(", ")
-                      : "-"}
+                    {editingId === source.id ? (
+                      <Input
+                        value={editForm.keywords}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, keywords: e.target.value }))
+                        }
+                        placeholder="UXUI, figma"
+                      />
+                    ) : source.keywords && source.keywords.length > 0 ? (
+                      source.keywords.join(", ")
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell>
                     <button
@@ -262,15 +361,50 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
                       />
                     </button>
                   </TableCell>
-                  <TableCell>{source.source_type}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteId(source.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <span className="text-xs px-2 py-1 rounded bg-muted">
+                      {source.source_type}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {editingId === source.id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSaveEdit(source)}
+                            disabled={loadingId === source.id}
+                          >
+                            저장
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingId(null)}
+                          >
+                            취소
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStartEdit(source)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteId(source.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

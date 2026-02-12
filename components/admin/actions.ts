@@ -751,7 +751,13 @@ export async function createArticleSourceAction(data: {
 
 export async function updateArticleSourceAction(
   id: string,
-  data: { is_active?: boolean; name?: string; category?: string; keywords?: string[] }
+  data: {
+    is_active?: boolean;
+    name?: string;
+    category?: string;
+    keywords?: string[];
+    url?: string;
+  }
 ) {
   const adminStatus = await isAdmin();
   if (!adminStatus) return { success: false, error: "권한이 없습니다." };
@@ -761,7 +767,16 @@ export async function updateArticleSourceAction(
   if (data.is_active !== undefined) updateData.is_active = data.is_active;
   if (data.name !== undefined) updateData.name = data.name.trim();
   if (data.category !== undefined) updateData.category = data.category.trim();
-  if (data.keywords !== undefined) updateData.keywords = sanitizeKeywords(data.keywords);
+  const sanitizedKeywords =
+    data.keywords !== undefined ? sanitizeKeywords(data.keywords) : undefined;
+  if (sanitizedKeywords !== undefined) updateData.keywords = sanitizedKeywords;
+  if (data.url !== undefined) {
+    const normalizedUrl = normalizeSourceUrl(data.url, sanitizedKeywords);
+    if (!normalizedUrl) {
+      return { success: false, error: "유효한 URL이 아닙니다." };
+    }
+    updateData.url = normalizedUrl;
+  }
 
   const { error } = await supabase
     .from("article_sources")
