@@ -735,6 +735,7 @@ export async function createArticleSourceAction(data: {
       url: normalizedUrl,
       category: data.category?.trim() || "프로덕트 디자인",
       is_active: data.is_active ?? true,
+      source_type: "manual",
       keywords,
     })
     .select("*")

@@ -37,6 +37,7 @@ interface Source {
   category: string;
   keywords: string[] | null;
   is_active: boolean;
+  source_type: string;
   created_at: string;
 }
 
@@ -277,13 +278,14 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
               <TableHead>카테고리</TableHead>
               <TableHead>키워드</TableHead>
               <TableHead>활성</TableHead>
+              <TableHead>타입</TableHead>
               <TableHead className="w-[140px]">작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sources.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   등록된 소스가 없습니다.
                 </TableCell>
               </TableRow>
@@ -358,6 +360,11 @@ export function SourceManagement({ initialSources }: SourceManagementProps) {
                         }`}
                       />
                     </button>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs px-2 py-1 rounded bg-muted">
+                      {source.source_type}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
