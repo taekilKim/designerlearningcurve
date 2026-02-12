@@ -30,6 +30,7 @@ export default async function Home({
   let articlesQuery = supabase
     .from("articles")
     .select("*")
+    .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(MAX_FEED_CANDIDATES);
 

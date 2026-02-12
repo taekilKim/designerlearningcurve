@@ -21,6 +21,18 @@ CREATE TABLE IF NOT EXISTS articles (
   thumbnail_url TEXT,
   author TEXT,
   published_at TIMESTAMPTZ,
+  is_published BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS article_sources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  url TEXT NOT NULL UNIQUE,
+  category TEXT,
+  source_type TEXT NOT NULL DEFAULT 'manual',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -123,12 +135,15 @@ CREATE INDEX IF NOT EXISTS idx_learning_notes_enrollment_id ON learning_notes(en
 CREATE INDEX IF NOT EXISTS idx_learning_notes_curriculum_item_id ON learning_notes(curriculum_item_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_normalized_url_unique
   ON articles (normalize_article_url(url));
+CREATE INDEX IF NOT EXISTS idx_article_sources_is_active ON article_sources(is_active);
+CREATE INDEX IF NOT EXISTS idx_article_sources_created_at ON article_sources(created_at DESC);
 
 -- Row Level Security (RLS) Policies
 
 -- Enable RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE article_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE curriculums ENABLE ROW LEVEL SECURITY;
 ALTER TABLE curriculum_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
@@ -279,6 +294,46 @@ CREATE POLICY "Admins can delete articles"
     )
   );
 
+CREATE POLICY "Admins can read article_sources"
+  ON article_sources FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can insert article_sources"
+  ON article_sources FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update article_sources"
+  ON article_sources FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can delete article_sources"
+  ON article_sources FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
 -- Admin policies for curriculums
 CREATE POLICY "Admins can insert curriculums"
   ON curriculums FOR INSERT
@@ -376,6 +431,9 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_article_sources_updated_at BEFORE UPDATE ON article_sources
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_curriculums_updated_at BEFORE UPDATE ON curriculums

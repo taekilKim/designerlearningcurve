@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
 import * as cheerio from "cheerio";
 import { buildMixedArticleFeed } from "@/lib/article-feed";
+import { normalizeArticleUrl } from "@/lib/article-url";
 
 // Metadata Extraction
 
@@ -189,6 +190,7 @@ export async function createArticleAction(formData: {
   author?: string;
   published_at?: string;
   category?: string | null;
+  is_published?: boolean;
 }) {
   // Check admin status
   const adminStatus = await isAdmin();
@@ -220,6 +222,7 @@ export async function createArticleAction(formData: {
     author: formData.author || null,
     published_at: formData.published_at || null,
     category: formData.category || null,
+    is_published: formData.is_published ?? true,
   });
 
   if (error) {
@@ -248,6 +251,7 @@ export async function updateArticleAction(
     author?: string;
     published_at?: string;
     category?: string | null;
+    is_published?: boolean;
   }
 ) {
   // Check admin status
@@ -257,31 +261,33 @@ export async function updateArticleAction(
   }
 
   const supabase = await createClient();
-  const normalizedUrl = normalizeArticleUrl(formData.url);
+  if (formData.url !== undefined) {
+    const normalizedUrl = normalizeArticleUrl(formData.url);
+    const { data: existingArticle } = await supabase
+      .from("articles")
+      .select("id")
+      .eq("url", normalizedUrl)
+      .neq("id", id)
+      .maybeSingle();
 
-  const { data: existingArticle } = await supabase
-    .from("articles")
-    .select("id")
-    .eq("url", normalizedUrl)
-    .neq("id", id)
-    .maybeSingle();
-
-  if (existingArticle) {
-    return {
-      success: false,
-      error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
-    };
+    if (existingArticle) {
+      return {
+        success: false,
+        error: "이미 수집된 아티클입니다. 중복 URL은 저장할 수 없습니다.",
+      };
+    }
   }
 
   // Build update object with only provided fields
   const updateData: any = {};
   if (formData.title !== undefined) updateData.title = formData.title;
   if (formData.description !== undefined) updateData.description = formData.description || null;
-  if (formData.url !== undefined) updateData.url = formData.url;
+  if (formData.url !== undefined) updateData.url = normalizeArticleUrl(formData.url);
   if (formData.thumbnail_url !== undefined) updateData.thumbnail_url = formData.thumbnail_url || null;
   if (formData.author !== undefined) updateData.author = formData.author || null;
   if (formData.published_at !== undefined) updateData.published_at = formData.published_at || null;
   if (formData.category !== undefined) updateData.category = formData.category || null;
+  if (formData.is_published !== undefined) updateData.is_published = formData.is_published;
 
   const { error } = await supabase
     .from("articles")
@@ -534,6 +540,7 @@ export async function loadMoreArticlesAction(
   let query = supabase
     .from("articles")
     .select("*")
+    .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(MAX_FEED_CANDIDATES);
 
@@ -552,6 +559,191 @@ export async function loadMoreArticlesAction(
   const paginated = mixedArticles.slice(offset, offset + pageSize);
 
   return { success: true, articles: paginated };
+}
+
+type SourcePreview = {
+  feedTitle: string;
+  feedDescription: string;
+  detectedType: "rss" | "atom" | "unknown";
+  sampleItems: string[];
+};
+
+function parseSourcePreview(xmlOrHtml: string): SourcePreview {
+  const $xml = cheerio.load(xmlOrHtml, { xmlMode: true });
+  const rssTitle = $xml("rss > channel > title").first().text().trim();
+  const rssDescription = $xml("rss > channel > description").first().text().trim();
+  const rssItems = $xml("rss > channel > item > title")
+    .toArray()
+    .map((el) => $xml(el).text().trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if (rssTitle || rssItems.length > 0) {
+    return {
+      feedTitle: rssTitle,
+      feedDescription: rssDescription,
+      detectedType: "rss",
+      sampleItems: rssItems,
+    };
+  }
+
+  const atomTitle = $xml("feed > title").first().text().trim();
+  const atomDescription =
+    $xml("feed > subtitle").first().text().trim() ||
+    $xml("feed > tagline").first().text().trim();
+  const atomItems = $xml("feed > entry > title")
+    .toArray()
+    .map((el) => $xml(el).text().trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if (atomTitle || atomItems.length > 0) {
+    return {
+      feedTitle: atomTitle,
+      feedDescription: atomDescription,
+      detectedType: "atom",
+      sampleItems: atomItems,
+    };
+  }
+
+  return {
+    feedTitle: "",
+    feedDescription: "",
+    detectedType: "unknown",
+    sampleItems: [],
+  };
+}
+
+export async function previewArticleSourceAction(url: string) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) return { success: false, error: "권한이 없습니다." };
+
+  const normalizedUrl = normalizeArticleUrl(url);
+  if (!normalizedUrl) return { success: false, error: "URL이 유효하지 않습니다." };
+
+  try {
+    const response = await fetch(normalizedUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SourcePreviewBot/1.0)" },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `HTTP 오류: ${response.status}` };
+    }
+
+    const body = await response.text();
+    let preview = parseSourcePreview(body);
+
+    if (preview.detectedType === "unknown") {
+      const $ = cheerio.load(body);
+      const altFeed =
+        $('link[rel="alternate"][type="application/rss+xml"]').attr("href") ||
+        $('link[rel="alternate"][type="application/atom+xml"]').attr("href");
+
+      if (altFeed) {
+        const feedUrl = new URL(altFeed, normalizedUrl).toString();
+        const feedResponse = await fetch(feedUrl, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; SourcePreviewBot/1.0)" },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (feedResponse.ok) {
+          preview = parseSourcePreview(await feedResponse.text());
+        }
+      }
+    }
+
+    return { success: true, data: preview };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "소스 메타데이터 확인에 실패했습니다.",
+    };
+  }
+}
+
+export async function getArticleSourcesAction() {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) return { success: false, error: "권한이 없습니다.", sources: [] };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("article_sources")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return { success: false, error: error.message, sources: [] };
+  }
+
+  return { success: true, sources: data || [] };
+}
+
+export async function createArticleSourceAction(data: {
+  name: string;
+  url: string;
+  category?: string;
+  is_active?: boolean;
+}) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) return { success: false, error: "권한이 없습니다." };
+
+  const supabase = await createClient();
+  const normalizedUrl = normalizeArticleUrl(data.url);
+  if (!normalizedUrl) return { success: false, error: "유효한 URL이 아닙니다." };
+
+  const { data: source, error } = await supabase
+    .from("article_sources")
+    .insert({
+      name: data.name.trim(),
+      url: normalizedUrl,
+      category: data.category?.trim() || "프로덕트 디자인",
+      is_active: data.is_active ?? true,
+      source_type: "manual",
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/admin/sources");
+  return { success: true, source };
+}
+
+export async function updateArticleSourceAction(
+  id: string,
+  data: { is_active?: boolean; name?: string; category?: string }
+) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) return { success: false, error: "권한이 없습니다." };
+
+  const supabase = await createClient();
+  const updateData: Record<string, unknown> = {};
+  if (data.is_active !== undefined) updateData.is_active = data.is_active;
+  if (data.name !== undefined) updateData.name = data.name.trim();
+  if (data.category !== undefined) updateData.category = data.category.trim();
+
+  const { error } = await supabase
+    .from("article_sources")
+    .update(updateData)
+    .eq("id", id);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/sources");
+  return { success: true };
+}
+
+export async function deleteArticleSourceAction(id: string) {
+  const adminStatus = await isAdmin();
+  if (!adminStatus) return { success: false, error: "권한이 없습니다." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("article_sources").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/sources");
+  return { success: true };
 }
 
 export async function loadMoreCurriculumsAction(

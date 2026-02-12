@@ -8,7 +8,8 @@ import {
   FileText,
   BookOpen,
   FolderOpen,
-  Home
+  Home,
+  Rss
 } from "lucide-react";
 
 const navItems = [
@@ -31,6 +32,11 @@ const navItems = [
     title: "카테고리 관리",
     href: "/admin/categories",
     icon: FolderOpen,
+  },
+  {
+    title: "소스 관리",
+    href: "/admin/sources",
+    icon: Rss,
   },
 ];
 

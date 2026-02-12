@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS articles (
   description TEXT,
   url TEXT NOT NULL,
   author TEXT,
+  is_published BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -37,6 +38,61 @@ CREATE POLICY "Anyone can view articles"
 CREATE POLICY "Admins can insert articles"
   ON articles FOR INSERT
   WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+-- 2-1. Article Sources 테이블 (수집 소스)
+-- ============================================
+CREATE TABLE IF NOT EXISTS article_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  url TEXT NOT NULL UNIQUE,
+  category TEXT,
+  source_type TEXT NOT NULL DEFAULT 'manual',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE article_sources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can read article_sources"
+  ON article_sources FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can insert article_sources"
+  ON article_sources FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update article_sources"
+  ON article_sources FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can delete article_sources"
+  ON article_sources FOR DELETE
+  USING (
     EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()
@@ -355,6 +411,7 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_user_id ON enrollments(user_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_curriculum_id ON enrollments(curriculum_id);
 CREATE INDEX IF NOT EXISTS idx_completed_items_enrollment_id ON completed_items(enrollment_id);
 CREATE INDEX IF NOT EXISTS idx_learning_notes_enrollment_id ON learning_notes(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_article_sources_is_active ON article_sources(is_active);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_normalized_url_unique
   ON articles (normalize_article_url(url));
 
@@ -372,6 +429,11 @@ $$ LANGUAGE plpgsql;
 -- Articles 트리거
 CREATE TRIGGER update_articles_updated_at
   BEFORE UPDATE ON articles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_article_sources_updated_at
+  BEFORE UPDATE ON article_sources
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 

@@ -42,6 +42,7 @@ interface Article {
   author: string | null;
   published_at: string | null;
   category: string | null;
+  is_published: boolean;
   created_at: string;
 }
 
@@ -62,6 +63,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updatingCategory, setUpdatingCategory] = useState<string | null>(null);
+  const [updatingPublish, setUpdatingPublish] = useState<string | null>(null);
 
   const handleCategoryChange = async (articleId: string, newCategory: string) => {
     setUpdatingCategory(articleId);
@@ -101,6 +103,26 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
     }
   };
 
+  const handlePublishToggle = async (articleId: string, isPublished: boolean) => {
+    setUpdatingPublish(articleId);
+    try {
+      const result = await updateArticleAction(articleId, {
+        is_published: isPublished,
+      });
+
+      if (result.success) {
+        toast.success(isPublished ? "아티클이 발행 처리되었습니다." : "아티클이 비공개 처리되었습니다.");
+        router.refresh();
+      } else {
+        toast.error(result.error || "발행 상태 변경에 실패했습니다.");
+      }
+    } catch {
+      toast.error("발행 상태 변경 중 오류가 발생했습니다.");
+    } finally {
+      setUpdatingPublish(null);
+    }
+  };
+
   const handleRowClick = (articleId: string, e: React.MouseEvent) => {
     // Ignore clicks on buttons, links, and select elements
     const target = e.target as HTMLElement;
@@ -124,6 +146,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
               <TableHead className="w-[40%]">제목</TableHead>
               <TableHead className="w-[120px]">작성자</TableHead>
               <TableHead className="w-[150px]">카테고리</TableHead>
+              <TableHead className="w-[110px]">발행</TableHead>
               <TableHead className="w-[110px]">등록일</TableHead>
               <TableHead className="w-[150px]">작업</TableHead>
             </TableRow>
@@ -131,7 +154,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
           <TableBody>
             {articles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   등록된 아티클이 없습니다.
                 </TableCell>
               </TableRow>
@@ -177,6 +200,26 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
                         ))}
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={article.is_published}
+                      disabled={updatingPublish === article.id}
+                      onClick={() =>
+                        handlePublishToggle(article.id, !article.is_published)
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        article.is_published ? "bg-primary" : "bg-muted-foreground/40"
+                      } ${updatingPublish === article.id ? "opacity-50" : ""}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          article.is_published ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground">

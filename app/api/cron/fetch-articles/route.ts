@@ -19,30 +19,23 @@ interface RssSource {
   category: string;
 }
 
-// RSS feeds — 디자인 테크닉/학습 중심, 국내 소스 우선
-const STATIC_RSS_SOURCES: RssSource[] = [
-  // ── 국내 디자인 커뮤니티 & 매거진 ──
-  { name: "서핏 매거진", url: "https://mag.surfit.io/feed", category: "프로덕트 디자인" },
-  { name: "요즘IT", url: "https://yozm.wishket.com/magazine/feed/", category: "프로덕트 디자인" },
-  { name: "DISQUIET", url: "https://disquiet.io/rss", category: "프로덕트 디자인" },
+async function loadConfiguredSources(supabase: ReturnType<typeof createAdminClient>): Promise<RssSource[]> {
+  const { data, error } = await supabase
+    .from("article_sources")
+    .select("name, url, category")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
 
-  // ── 국내 IT 기업 테크블로그 ──
-  { name: "토스 테크", url: "https://toss.tech/rss.xml", category: "프로덕트 디자인" },
-  { name: "당근 테크", url: "https://medium.com/feed/daangn", category: "프로덕트 디자인" },
-  { name: "우아한형제들", url: "https://techblog.woowahan.com/feed", category: "프로덕트 디자인" },
-  { name: "카카오 테크", url: "https://tech.kakao.com/feed", category: "프로덕트 디자인" },
-  { name: "네이버 D2", url: "https://d2.naver.com/d2.atom", category: "프로덕트 디자인" },
-  { name: "뱅크샐러드", url: "https://medium.com/feed/banksalad", category: "프로덕트 디자인" },
-  { name: "딜라이트룸", url: "https://medium.com/feed/delightroom", category: "프로덕트 디자인" },
-  { name: "강남언니", url: "https://blog.gangnamunni.com/feed.xml", category: "프로덕트 디자인" },
-  { name: "쿠팡 엔지니어링", url: "https://medium.com/feed/coupang-engineering", category: "프로덕트 디자인" },
-  { name: "여기어때 테크", url: "https://techblog.gccompany.co.kr/feed", category: "프로덕트 디자인" },
+  if (error || !data) return [];
 
-  // ── velog ──
-  { name: "velog UXUI", url: "https://v2.velog.io/rss/tag/UXUI", category: "UX 디자인" },
-  { name: "velog 디자인", url: "https://v2.velog.io/rss/tag/%EB%94%94%EC%9E%90%EC%9D%B8", category: "UI 디자인" },
-  { name: "velog Figma", url: "https://v2.velog.io/rss/tag/figma", category: "피그마 실무" },
-];
+  return data
+    .map((row) => ({
+      name: row.name,
+      url: row.url,
+      category: row.category || "프로덕트 디자인",
+    }))
+    .filter((row) => Boolean(row.url));
+}
 
 interface ArticleData {
   title: string;
@@ -407,7 +400,8 @@ export async function GET(request: Request) {
   try {
     const supabase = createAdminClient();
     const brunchProfileSources = await buildBrunchSourcesFromExisting(supabase);
-    const sources: RssSource[] = [...brunchProfileSources, ...STATIC_RSS_SOURCES];
+    const configuredSources = await loadConfiguredSources(supabase);
+    const sources: RssSource[] = [...brunchProfileSources, ...configuredSources];
 
     // 1. RSS 수집
     let candidates = await fetchFromRSS(sources);
@@ -533,6 +527,7 @@ export async function GET(request: Request) {
         url: article.url, thumbnail_url: article.thumbnail_url || null,
         author: article.author || null, published_at: article.published_at,
         category: article.category || null,
+        is_published: false,
       });
       if (!error) { insertedCount++; insertedArticles.push(article); }
       else console.log(`[Cron] Failed: "${article.title}":`, error.message);
