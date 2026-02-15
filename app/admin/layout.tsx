@@ -14,9 +14,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen md:flex">
       <AdminNav />
-      <main className="flex-1 p-8">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-auto p-4 md:p-8">{children}</main>
     </div>
   );
 }
