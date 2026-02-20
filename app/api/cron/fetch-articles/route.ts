@@ -344,6 +344,19 @@ function parseProfileRssSource(
   };
 }
 
+function extractAlternateFeedUrl(html: string, baseUrl: string): string | null {
+  const $ = cheerio.load(html);
+  const feedHref =
+    $('link[rel="alternate"][type="application/rss+xml"]').attr("href") ||
+    $('link[rel="alternate"][type="application/atom+xml"]').attr("href");
+  if (!feedHref) return null;
+  try {
+    return new URL(feedHref, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
 async function buildBrunchSourcesFromExisting(supabase: ReturnType<typeof createAdminClient>) {
   const { data: brunchArticles } = await supabase
     .from("articles")
@@ -415,7 +428,22 @@ async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
           signal: AbortSignal.timeout(10000),
         });
         if (!res.ok) return [];
-        return parseRSS(await res.text(), source.category);
+        const body = await res.text();
+        const parsed = parseRSS(body, source.category);
+        if (parsed.length > 0) return parsed;
+
+        // 소스 URL이 피드가 아닌 프로필/웹페이지인 경우, alternate RSS/Atom 링크를 따라가서 재시도
+        const altFeedUrl = extractAlternateFeedUrl(body, source.url);
+        const normalizedAlt = normalizeArticleUrl(altFeedUrl);
+        const normalizedSource = normalizeArticleUrl(source.url);
+        if (!normalizedAlt || normalizedAlt === normalizedSource) return [];
+
+        const altRes = await fetch(normalizedAlt, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; ArticleBot/1.0)" },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!altRes.ok) return [];
+        return parseRSS(await altRes.text(), source.category);
       } catch {
         console.log(`[Cron] Failed: ${source.name}`);
         return [];
