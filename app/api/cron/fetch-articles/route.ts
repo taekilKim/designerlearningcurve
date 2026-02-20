@@ -434,6 +434,7 @@ async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
 
         // 소스 URL이 피드가 아닌 프로필/웹페이지인 경우, alternate RSS/Atom 링크를 따라가서 재시도
         const altFeedUrl = extractAlternateFeedUrl(body, source.url);
+        if (!altFeedUrl) return [];
         const normalizedAlt = normalizeArticleUrl(altFeedUrl);
         const normalizedSource = normalizeArticleUrl(source.url);
         if (!normalizedAlt || normalizedAlt === normalizedSource) return [];
