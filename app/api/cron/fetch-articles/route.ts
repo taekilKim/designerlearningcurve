@@ -99,6 +99,9 @@ function classifyCategory(title: string, desc: string, fallback: string): string
 
   const rules: [string[], string][] = [
     [["디자인 시스템", "design system", "컴포넌트 라이브러리", "토큰"], "디자인 시스템"],
+    [["커리어", "취업", "이직", "포트폴리오", "회고", "신입", "주니어", "시니어"], "디자인 커리어"],
+    [["협업", "커뮤니케이션", "디자인 조직", "핸드오프", "stakeholder", "스테이크홀더"], "협업과 소프트스킬"],
+    [["전략", "strategy", "지표", "north star", "roadmap", "로드맵", "우선순위"], "프로덕트 디자인"],
     [["타이포", "서체", "폰트", "font", "typography", "글꼴", "행간", "자간"], "타이포그래피"],
     [["컬러", "color", "색상", "팔레트", "배색", "명도", "채도"], "컬러 이론"],
     [["아이콘", "icon", "svg", "벡터"], "아이콘 디자인"],
