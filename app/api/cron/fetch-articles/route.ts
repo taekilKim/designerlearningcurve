@@ -71,6 +71,7 @@ interface ArticleData {
   title: string;
   description: string;
   url: string;
+  source_key: string;
   thumbnail_url: string | null;
   author: string | null;
   published_at: string;
@@ -241,7 +242,7 @@ function scoreRelevance(article: ArticleData): number {
   return score;
 }
 
-function parseRSS(xml: string, defaultCategory: string): ArticleData[] {
+function parseRSS(xml: string, defaultCategory: string, sourceKey: string): ArticleData[] {
   const $ = cheerio.load(xml, { xmlMode: true });
   const articles: ArticleData[] = [];
 
@@ -261,6 +262,7 @@ function parseRSS(xml: string, defaultCategory: string): ArticleData[] {
       const category = classifyCategory(title, description, defaultCategory);
       articles.push({
         title, description: description || "", url: link,
+        source_key: sourceKey,
         thumbnail_url: thumbnail, author,
         published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
         category,
@@ -281,6 +283,7 @@ function parseRSS(xml: string, defaultCategory: string): ArticleData[] {
         const category = classifyCategory(title, summary, defaultCategory);
         articles.push({
           title, description: summary || "", url: link,
+          source_key: sourceKey,
           thumbnail_url: null, author,
           published_at: updated ? new Date(updated).toISOString() : new Date().toISOString(),
           category,
@@ -432,7 +435,7 @@ async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
         });
         if (!res.ok) return [];
         const body = await res.text();
-        const parsed = parseRSS(body, source.category);
+        const parsed = parseRSS(body, source.category, source.url);
         if (parsed.length > 0) return parsed;
 
         // 소스 URL이 피드가 아닌 프로필/웹페이지인 경우, alternate RSS/Atom 링크를 따라가서 재시도
@@ -447,7 +450,7 @@ async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
           signal: AbortSignal.timeout(10000),
         });
         if (!altRes.ok) return [];
-        return parseRSS(await altRes.text(), source.category);
+        return parseRSS(await altRes.text(), source.category, source.url);
       } catch {
         console.log(`[Cron] Failed: ${source.name}`);
         return [];
@@ -561,10 +564,10 @@ export async function GET(request: Request) {
     //    각 소스 도메인에서 스코어 높은 순으로 라운드로빈
     const bySource = new Map<string, ArticleData[]>();
     for (const a of newArticles) {
-      const domain = safeDomainFromUrl(a.url);
-      const list = bySource.get(domain) || [];
+      const sourceKey = a.source_key || safeDomainFromUrl(a.url);
+      const list = bySource.get(sourceKey) || [];
       list.push(a);
-      bySource.set(domain, list);
+      bySource.set(sourceKey, list);
     }
     for (const list of bySource.values()) {
       list.sort((a, b) => scoreRelevance(b) - scoreRelevance(a));
