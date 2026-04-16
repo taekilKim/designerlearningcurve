@@ -26,11 +26,11 @@ export function NoteEditor({
 
   // Update content when initialContent changes (e.g., after data fetch)
   useEffect(() => {
-    if (initialContent && initialContent !== content) {
+    if (initialContent !== content && !hasUnsavedChanges) {
       setContent(initialContent);
       setHasUnsavedChanges(false);
     }
-  }, [initialContent]);
+  }, [content, hasUnsavedChanges, initialContent]);
 
   // Track if content has changed - use useCallback to prevent recreating function
   const handleContentChange = useCallback((newContent: string) => {
@@ -58,7 +58,7 @@ export function NoteEditor({
         const errorMessage = result.error || "알 수 없는 오류";
         toast.error(`노트 저장 중 오류가 발생했습니다: ${errorMessage}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("노트 저장 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);

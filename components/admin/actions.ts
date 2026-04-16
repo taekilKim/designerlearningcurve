@@ -7,6 +7,25 @@ import * as cheerio from "cheerio";
 import { buildMixedArticleFeed } from "@/lib/article-feed";
 import { normalizeArticleUrl } from "@/lib/article-url";
 
+type ArticleMutationFields = {
+  title: string;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  author: string | null;
+  published_at: string | null;
+  category: string | null;
+  is_published: boolean;
+};
+
+type CurriculumMutationFields = {
+  title: string;
+  description: string | null;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  estimated_hours: number | null;
+  category: string | null;
+};
+
 // Metadata Extraction
 
 export async function extractMetadataAction(url: string) {
@@ -119,7 +138,7 @@ export async function bulkUpdateArticlesMetadataAction() {
         const { data: metadata } = metadataResult;
 
         // Prepare update data (only update empty fields)
-        const updateData: any = {};
+        const updateData: Partial<ArticleMutationFields> = {};
 
         if (!article.title && metadata.title) {
           updateData.title = metadata.title;
@@ -261,15 +280,17 @@ export async function updateArticleAction(
   }
 
   const supabase = await createClient();
-  if (formData.url !== undefined) {
-    const normalizedUrl = normalizeArticleUrl(formData.url);
+  const normalizedUrl = formData.url
+    ? normalizeArticleUrl(formData.url)
+    : undefined;
+
+  if (normalizedUrl) {
     const { data: existingArticle } = await supabase
       .from("articles")
       .select("id")
       .eq("url", normalizedUrl)
       .neq("id", id)
       .maybeSingle();
-
     if (existingArticle) {
       return {
         success: false,
@@ -279,10 +300,10 @@ export async function updateArticleAction(
   }
 
   // Build update object with only provided fields
-  const updateData: any = {};
+  const updateData: Partial<ArticleMutationFields> = {};
   if (formData.title !== undefined) updateData.title = formData.title;
   if (formData.description !== undefined) updateData.description = formData.description || null;
-  if (formData.url !== undefined) updateData.url = normalizeArticleUrl(formData.url);
+  if (normalizedUrl !== undefined) updateData.url = normalizedUrl;
   if (formData.thumbnail_url !== undefined) updateData.thumbnail_url = formData.thumbnail_url || null;
   if (formData.author !== undefined) updateData.author = formData.author || null;
   if (formData.published_at !== undefined) updateData.published_at = formData.published_at || null;
@@ -390,7 +411,7 @@ export async function updateCurriculumAction(
   const supabase = await createClient();
 
   // Build update object with only provided fields
-  const updateData: any = {};
+  const updateData: Partial<CurriculumMutationFields> = {};
   if (formData.title !== undefined) updateData.title = formData.title;
   if (formData.description !== undefined) updateData.description = formData.description || null;
   if (formData.difficulty !== undefined) updateData.difficulty = formData.difficulty;

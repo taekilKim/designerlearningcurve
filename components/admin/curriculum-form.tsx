@@ -84,7 +84,7 @@ export function CurriculumForm({ curriculum, mode, categories }: CurriculumFormP
       } else {
         toast.error(result.error || "오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);

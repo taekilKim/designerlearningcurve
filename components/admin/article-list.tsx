@@ -78,7 +78,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
       } else {
         toast.error(result.error || "카테고리 변경에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("카테고리 변경 중 오류가 발생했습니다.");
     } finally {
       setUpdatingCategory(null);
@@ -96,7 +96,7 @@ export function ArticleList({ articles, categories }: ArticleListProps) {
       } else {
         toast.error(result.error || "삭제 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);

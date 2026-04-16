@@ -81,7 +81,7 @@ export function ArticleForm({ article, mode, categories }: ArticleFormProps) {
       } else {
         toast.error(result.error || "메타데이터 추출에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("메타데이터 추출 중 오류가 발생했습니다.");
     } finally {
       setIsExtracting(false);
@@ -118,7 +118,7 @@ export function ArticleForm({ article, mode, categories }: ArticleFormProps) {
       } else {
         toast.error(result.error || "오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);

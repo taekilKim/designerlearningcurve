@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -98,7 +97,7 @@ export function CurriculumItemsManager({
       } else {
         toast.error(result.error || "추가 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("추가 중 오류가 발생했습니다.");
     } finally {
       setIsAdding(false);
@@ -118,7 +117,7 @@ export function CurriculumItemsManager({
       } else {
         toast.error(result.error || "제거 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("제거 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);
@@ -143,7 +142,7 @@ export function CurriculumItemsManager({
       } else {
         toast.error(result.error || "수정 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("수정 중 오류가 발생했습니다.");
     }
   };

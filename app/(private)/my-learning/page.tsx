@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { EnrollmentCard } from "@/components/learning/enrollment-card";
+import Link from "next/link";
+import {
+  hydrateEnrollment,
+  type LearningEnrollment,
+  type RawLearningEnrollment,
+} from "@/lib/learning";
 
 export const dynamic = 'force-dynamic';
 
@@ -45,33 +51,9 @@ export default async function MyLearningPage() {
   }
 
   // Process enrollments to include completion data
-  const processedEnrollments = enrollments?.map((enrollment: any) => {
-    const items = enrollment.curriculum?.curriculum_items || [];
-
-    // Sort items by sequence
-    const sortedItems = [...items].sort((a, b) => a.sequence - b.sequence);
-
-    // Calculate progress
-    const totalItems = sortedItems.length;
-    const completedItems = sortedItems.filter(
-      (item: any) => item.completed_items && item.completed_items.length > 0
-    ).length;
-
-    const progressPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-
-    return {
-      ...enrollment,
-      curriculum: {
-        ...enrollment.curriculum,
-        curriculum_items: sortedItems,
-      },
-      stats: {
-        totalItems,
-        completedItems,
-        progressPercentage,
-      },
-    };
-  });
+  const processedEnrollments: LearningEnrollment[] = (enrollments ?? []).map(
+    (enrollment) => hydrateEnrollment(enrollment as RawLearningEnrollment)
+  );
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl mb-20 md:mb-0">
@@ -82,9 +64,9 @@ export default async function MyLearningPage() {
         </p>
       </div>
 
-      {processedEnrollments && processedEnrollments.length > 0 ? (
+      {processedEnrollments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {processedEnrollments.map((enrollment: any) => (
+          {processedEnrollments.map((enrollment) => (
             <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
           ))}
         </div>
@@ -93,12 +75,12 @@ export default async function MyLearningPage() {
           <p className="text-muted-foreground mb-4">
             아직 등록한 커리큘럼이 없습니다.
           </p>
-          <a
+          <Link
             href="/curriculums"
             className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
           >
             커리큘럼 둘러보기
-          </a>
+          </Link>
         </div>
       )}
     </div>

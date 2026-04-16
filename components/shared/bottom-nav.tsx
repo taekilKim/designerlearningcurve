@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { House, BookOpen, GraduationCap, UserGear, SignOut, SignIn } from "@phosphor-icons/react";
 import { signOutAction } from "@/lib/auth-actions";
@@ -12,9 +12,9 @@ export function BottomNav() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = useCallback(async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -26,7 +26,7 @@ export function BottomNav() {
     } catch {
       return false;
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -52,7 +52,7 @@ export function BottomNav() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAdminStatus, supabase]);
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({

@@ -18,8 +18,8 @@ export default async function EditCurriculumPage({
 
   const [
     { data: curriculum, error: curriculumError },
-    { data: curriculumItems, error: itemsError },
-    { data: allArticles, error: articlesError },
+    { data: curriculumItems },
+    { data: allArticles },
     { data: categories }
   ] = await Promise.all([
     supabase.from("curriculums").select("*").eq("id", id).single(),

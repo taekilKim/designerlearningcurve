@@ -12,9 +12,14 @@ import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toggleCompletionAction } from "./actions";
 import { toast } from "sonner";
+import {
+  buildEnrollmentStats,
+  isCurriculumItemCompleted,
+  type LearningEnrollment,
+} from "@/lib/learning";
 
 interface LearningAccordionProps {
-  enrollments: any[];
+  enrollments: LearningEnrollment[];
 }
 
 export function LearningAccordion({ enrollments }: LearningAccordionProps) {
@@ -31,7 +36,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
         if (enrollment.id !== enrollmentId) return enrollment;
 
         const updatedItems = enrollment.curriculum.curriculum_items.map(
-          (item: any) => {
+          (item) => {
             if (item.id !== curriculumItemId) return item;
 
             return {
@@ -43,12 +48,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
           }
         );
 
-        const totalItems = updatedItems.length;
-        const completedItems = updatedItems.filter(
-          (item: any) => item.completed_items && item.completed_items.length > 0
-        ).length;
-        const progressPercentage =
-          totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+        const stats = buildEnrollmentStats(updatedItems);
 
         return {
           ...enrollment,
@@ -56,11 +56,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
             ...enrollment.curriculum,
             curriculum_items: updatedItems,
           },
-          stats: {
-            totalItems,
-            completedItems,
-            progressPercentage,
-          },
+          stats,
         };
       })
     );
@@ -78,7 +74,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
         setLocalEnrollments(enrollments);
         toast.error("저장 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       // Revert optimistic update on error
       setLocalEnrollments(enrollments);
       toast.error("저장 중 오류가 발생했습니다.");
@@ -112,15 +108,14 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
           <AccordionContent>
             <div className="space-y-3 pt-4">
               {enrollment.curriculum?.curriculum_items?.map(
-                (item: any, index: number) => {
-                  const isCompleted =
-                    item.completed_items && item.completed_items.length > 0;
+                (item, index: number) => {
+                  const isCompleted = isCurriculumItemCompleted(item);
 
                   return (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                    >
+                      <div
+                        key={item.id}
+                        className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                      >
                       <Checkbox
                         id={`item-${item.id}`}
                         checked={isCompleted}
@@ -128,7 +123,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                           handleToggleCompletion(
                             enrollment.id,
                             item.id,
-                            checked as boolean
+                            checked === true
                           );
                         }}
                         className="mt-1"

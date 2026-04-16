@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
@@ -14,23 +15,10 @@ import { useState } from "react";
 import { deleteEnrollmentAction } from "./actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import type { LearningEnrollment } from "@/lib/learning";
 
 interface EnrollmentCardProps {
-  enrollment: {
-    id: string;
-    curriculum_id: string;
-    curriculum: {
-      id: string;
-      title: string;
-      description: string;
-      thumbnail_url?: string;
-    };
-    stats: {
-      totalItems: number;
-      completedItems: number;
-      progressPercentage: number;
-    };
-  };
+  enrollment: LearningEnrollment;
 }
 
 export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
@@ -70,10 +58,12 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
       {/* Thumbnail */}
       <div className="aspect-video w-full bg-muted relative overflow-hidden">
         {enrollment.curriculum.thumbnail_url ? (
-          <img
+          <Image
             src={enrollment.curriculum.thumbnail_url}
             alt={enrollment.curriculum.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">

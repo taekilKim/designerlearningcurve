@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -57,12 +56,6 @@ interface CurriculumListProps {
   categories: Category[];
 }
 
-const difficultyLabels = {
-  beginner: "초급",
-  intermediate: "중급",
-  advanced: "고급",
-};
-
 export function CurriculumList({ curriculums, categories }: CurriculumListProps) {
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -82,7 +75,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
       } else {
         toast.error(result.error || "카테고리 변경에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("카테고리 변경 중 오류가 발생했습니다.");
     } finally {
       setUpdatingId(null);
@@ -105,7 +98,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
       } else {
         toast.error(result.error || "난이도 변경에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("난이도 변경 중 오류가 발생했습니다.");
     } finally {
       setUpdatingId(null);
@@ -123,7 +116,7 @@ export function CurriculumList({ curriculums, categories }: CurriculumListProps)
       } else {
         toast.error(result.error || "삭제 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);

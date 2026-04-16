@@ -47,7 +47,7 @@ export function BulkUpdateButton() {
       } else {
         toast.error(result.error || "일괄 업데이트 실패");
       }
-    } catch (error) {
+    } catch {
       toast.error("일괄 업데이트 중 오류가 발생했습니다.");
     } finally {
       setIsUpdating(false);

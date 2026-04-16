@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -15,6 +16,33 @@ import {
   Heading3,
 } from "lucide-react";
 import { useEffect } from "react";
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  active: boolean;
+  children: ReactNode;
+  title: string;
+}
+
+function ToolbarButton({
+  onClick,
+  active,
+  children,
+  title,
+}: ToolbarButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-2 rounded hover:bg-accent transition-colors ${
+        active ? "bg-accent text-primary" : "text-muted-foreground"
+      }`}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface RichTextEditorProps {
   content: string;
@@ -64,29 +92,6 @@ export function RichTextEditor({
   if (!editor) {
     return null;
   }
-
-  const ToolbarButton = ({
-    onClick,
-    active,
-    children,
-    title,
-  }: {
-    onClick: () => void;
-    active: boolean;
-    children: React.ReactNode;
-    title: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`p-2 rounded hover:bg-accent transition-colors ${
-        active ? "bg-accent text-primary" : "text-muted-foreground"
-      }`}
-      title={title}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="border rounded-lg overflow-hidden bg-background">

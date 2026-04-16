@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArticleCard } from "./article-card";
 import { loadMoreArticlesAction } from "@/components/admin/actions";
 import { Loader2 } from "lucide-react";
@@ -40,6 +40,28 @@ export function ArticleListInfinite({
     setHasMore(initialArticles.length === PAGE_SIZE);
   }, [category, initialArticles]);
 
+  const loadMore = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await loadMoreArticlesAction(page, PAGE_SIZE, category);
+
+      if (result.success && result.articles) {
+        if (result.articles.length === 0) {
+          setHasMore(false);
+        } else {
+          setArticles((prev) => [...prev, ...result.articles]);
+          setPage((prev) => prev + 1);
+          setHasMore(result.articles.length === PAGE_SIZE);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more articles:", error);
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [category, page]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -60,29 +82,7 @@ export function ArticleListInfinite({
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, isLoading, page, category]);
-
-  const loadMore = async () => {
-    setIsLoading(true);
-    try {
-      const result = await loadMoreArticlesAction(page, PAGE_SIZE, category);
-
-      if (result.success && result.articles) {
-        if (result.articles.length === 0) {
-          setHasMore(false);
-        } else {
-          setArticles((prev) => [...prev, ...result.articles]);
-          setPage((prev) => prev + 1);
-          setHasMore(result.articles.length === PAGE_SIZE);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading more articles:", error);
-      setHasMore(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [hasMore, isLoading, loadMore]);
 
   return (
     <>

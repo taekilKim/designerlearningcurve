@@ -13,14 +13,23 @@ import { useState } from "react";
 import { toggleCompletionAction } from "./actions";
 import { toast } from "sonner";
 import { NoteEditor } from "./note-editor";
+import {
+  buildEnrollmentStats,
+  isCurriculumItemCompleted,
+  type LearningEnrollment,
+} from "@/lib/learning";
 
 interface LearningAccordionProps {
-  enrollments: any[];
+  enrollments: LearningEnrollment[];
 }
 
 export function LearningAccordion({ enrollments }: LearningAccordionProps) {
   const [localEnrollments, setLocalEnrollments] = useState(enrollments);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  const toggleExpandedItem = (itemKey: string) => {
+    setExpandedItem((currentItemKey) => (currentItemKey === itemKey ? null : itemKey));
+  };
 
   const handleToggleCompletion = async (
     enrollmentId: string,
@@ -33,7 +42,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
         if (enrollment.id !== enrollmentId) return enrollment;
 
         const updatedItems = enrollment.curriculum.curriculum_items.map(
-          (item: any) => {
+          (item) => {
             if (item.id !== curriculumItemId) return item;
 
             return {
@@ -45,12 +54,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
           }
         );
 
-        const totalItems = updatedItems.length;
-        const completedItems = updatedItems.filter(
-          (item: any) => item.completed_items && item.completed_items.length > 0
-        ).length;
-        const progressPercentage =
-          totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+        const stats = buildEnrollmentStats(updatedItems);
 
         return {
           ...enrollment,
@@ -58,11 +62,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
             ...enrollment.curriculum,
             curriculum_items: updatedItems,
           },
-          stats: {
-            totalItems,
-            completedItems,
-            progressPercentage,
-          },
+          stats,
         };
       })
     );
@@ -80,7 +80,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
         setLocalEnrollments(enrollments);
         toast.error("저장 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       // Revert optimistic update on error
       setLocalEnrollments(enrollments);
       toast.error("저장 중 오류가 발생했습니다.");
@@ -123,9 +123,8 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
             {/* Articles list */}
             <div className="space-y-3">
               {enrollment.curriculum?.curriculum_items?.map(
-                (item: any, index: number) => {
-                  const isCompleted =
-                    item.completed_items && item.completed_items.length > 0;
+                (item, index: number) => {
+                  const isCompleted = isCurriculumItemCompleted(item);
                   const itemKey = `${enrollment.id}-${item.id}`;
                   const isExpanded = expandedItem === itemKey;
 
@@ -139,9 +138,16 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                         className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-accent/5 transition-colors ${
                           isExpanded ? "border-b" : ""
                         }`}
-                        onClick={() =>
-                          setExpandedItem(isExpanded ? null : itemKey)
-                        }
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleExpandedItem(itemKey)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            toggleExpandedItem(itemKey);
+                          }
+                        }}
                       >
                         <Checkbox
                           id={`item-${item.id}`}
@@ -150,7 +156,7 @@ export function LearningAccordion({ enrollments }: LearningAccordionProps) {
                             handleToggleCompletion(
                               enrollment.id,
                               item.id,
-                              checked as boolean
+                              checked === true
                             );
                           }}
                           onClick={(e) => e.stopPropagation()}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CurriculumCard } from "./curriculum-card";
 import { loadMoreCurriculumsAction } from "@/components/admin/actions";
 import { Loader2 } from "lucide-react";
@@ -41,6 +41,28 @@ export function CurriculumListInfinite({
     setHasMore(initialCurriculums.length === PAGE_SIZE);
   }, [category, initialCurriculums]);
 
+  const loadMore = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await loadMoreCurriculumsAction(page, PAGE_SIZE, category);
+
+      if (result.success && result.curriculums) {
+        if (result.curriculums.length === 0) {
+          setHasMore(false);
+        } else {
+          setCurriculums((prev) => [...prev, ...result.curriculums]);
+          setPage((prev) => prev + 1);
+          setHasMore(result.curriculums.length === PAGE_SIZE);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more curriculums:", error);
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [category, page]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -61,29 +83,7 @@ export function CurriculumListInfinite({
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, isLoading, page, category]);
-
-  const loadMore = async () => {
-    setIsLoading(true);
-    try {
-      const result = await loadMoreCurriculumsAction(page, PAGE_SIZE, category);
-
-      if (result.success && result.curriculums) {
-        if (result.curriculums.length === 0) {
-          setHasMore(false);
-        } else {
-          setCurriculums((prev) => [...prev, ...result.curriculums]);
-          setPage((prev) => prev + 1);
-          setHasMore(result.curriculums.length === PAGE_SIZE);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading more curriculums:", error);
-      setHasMore(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [hasMore, isLoading, loadMore]);
 
   return (
     <>

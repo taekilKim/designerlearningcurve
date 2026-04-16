@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { signOutAction } from "@/lib/auth-actions";
 
@@ -13,9 +13,9 @@ export function GNB() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = useCallback(async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -31,7 +31,7 @@ export function GNB() {
       console.error("[GNB] Failed to fetch admin status:", error);
       return false;
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -60,7 +60,7 @@ export function GNB() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAdminStatus, supabase]);
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({

@@ -6,7 +6,6 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, BookOpen, ExternalLink } from "lucide-react";
 import { EnrollButton } from "@/components/curriculum/enroll-button";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +45,18 @@ const difficultyColors = {
   intermediate: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   advanced: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
 };
+
+interface CurriculumDetailItem {
+  id: string;
+  sequence: number;
+  curator_note: string | null;
+  article: {
+    title: string;
+    description: string | null;
+    author: string | null;
+    url: string;
+  } | null;
+}
 
 export default async function CurriculumDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -150,7 +161,7 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
       <div>
         <h2 className="text-2xl font-bold mb-6">학습 내용</h2>
         <div className="space-y-4">
-          {items?.map((item: any, index: number) => (
+          {(items as CurriculumDetailItem[] | null)?.map((item, index: number) => (
             <Card key={item.id}>
               <CardHeader>
                 <div className="flex items-start gap-4">

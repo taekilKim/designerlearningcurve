@@ -1,19 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ExternalLink, ChevronDown } from "lucide-react";
 import { toggleCompletionAction } from "./actions";
 import { toast } from "sonner";
+import {
+  isCurriculumItemCompleted,
+  type LearningCurriculumItem,
+} from "@/lib/learning";
 
 interface ArticleListProps {
   enrollmentId: string;
-  items: any[];
+  items: LearningCurriculumItem[];
 }
 
 export function ArticleList({ enrollmentId, items }: ArticleListProps) {
   const [localItems, setLocalItems] = useState(items);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalItems(items);
+  }, [items]);
+
+  const toggleExpandedItem = (itemId: string) => {
+    setExpandedItem((currentItemId) => (currentItemId === itemId ? null : itemId));
+  };
 
   const handleToggleCompletion = async (
     curriculumItemId: string,
@@ -46,7 +58,7 @@ export function ArticleList({ enrollmentId, items }: ArticleListProps) {
         setLocalItems(items);
         toast.error("저장 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       // Revert optimistic update on error
       setLocalItems(items);
       toast.error("저장 중 오류가 발생했습니다.");
@@ -57,8 +69,7 @@ export function ArticleList({ enrollmentId, items }: ArticleListProps) {
     <div className="space-y-3">
       <h2 className="text-xl font-semibold mb-4">아티클 목록</h2>
       {localItems.map((item, index) => {
-        const isCompleted =
-          item.completed_items && item.completed_items.length > 0;
+        const isCompleted = isCurriculumItemCompleted(item);
         const isExpanded = expandedItem === item.id;
 
         return (
@@ -71,14 +82,23 @@ export function ArticleList({ enrollmentId, items }: ArticleListProps) {
               className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-accent/5 transition-colors ${
                 isExpanded ? "border-b" : ""
               }`}
-              onClick={() => setExpandedItem(isExpanded ? null : item.id)}
+              role="button"
+              tabIndex={0}
+              aria-expanded={isExpanded}
+              onClick={() => toggleExpandedItem(item.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  toggleExpandedItem(item.id);
+                }
+              }}
             >
-              <Checkbox
-                id={`item-${item.id}`}
-                checked={isCompleted}
-                onCheckedChange={(checked) => {
-                  handleToggleCompletion(item.id, checked as boolean);
-                }}
+                <Checkbox
+                  id={`item-${item.id}`}
+                  checked={isCompleted}
+                  onCheckedChange={(checked) => {
+                    handleToggleCompletion(item.id, checked === true);
+                  }}
                 onClick={(e) => e.stopPropagation()}
                 className="mt-1 flex-shrink-0"
               />
