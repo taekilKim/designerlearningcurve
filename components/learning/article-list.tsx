@@ -57,6 +57,8 @@ export function ArticleList({ enrollmentId, items }: ArticleListProps) {
         // Revert optimistic update on error
         setLocalItems(items);
         toast.error("저장 중 오류가 발생했습니다.");
+      } else if (result.justCompleted) {
+        toast.success("🎉 커리큘럼을 수료했습니다! 수고하셨어요.");
       }
     } catch {
       // Revert optimistic update on error

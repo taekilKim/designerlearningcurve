@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { DotsThree, Trash } from "@phosphor-icons/react";
+import { DotsThree, Trash, SealCheck } from "@phosphor-icons/react";
 import { useState } from "react";
 import { deleteEnrollmentAction } from "./actions";
 import { toast } from "sonner";
@@ -24,6 +24,10 @@ interface EnrollmentCardProps {
 export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const isCompleted =
+    enrollment.stats.totalItems > 0 &&
+    enrollment.stats.completedItems >= enrollment.stats.totalItems;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -57,6 +61,12 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
     >
       {/* Thumbnail */}
       <div className="aspect-video w-full bg-muted relative overflow-hidden">
+        {isCompleted && (
+          <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
+            <SealCheck size={14} weight="fill" />
+            수료 완료
+          </div>
+        )}
         {enrollment.curriculum.thumbnail_url ? (
           <Image
             src={enrollment.curriculum.thumbnail_url}
@@ -111,7 +121,9 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
         {/* Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">학습 진행률</span>
+            <span className="text-muted-foreground">
+              {isCompleted ? "모든 아티클 완료 🎉" : "학습 진행률"}
+            </span>
             <span className="font-medium">
               {enrollment.stats.completedItems} / {enrollment.stats.totalItems}
             </span>

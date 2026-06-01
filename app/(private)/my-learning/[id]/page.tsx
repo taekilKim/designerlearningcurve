@@ -66,6 +66,13 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
     (a, b) => a.sequence - b.sequence
   );
 
+  // Determine completion state for the celebration banner
+  const totalItems = sortedItems.length;
+  const completedItems = sortedItems.filter(
+    (item) => (item.completed_items?.length ?? 0) > 0
+  ).length;
+  const isCompleted = totalItems > 0 && completedItems >= totalItems;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -88,6 +95,21 @@ export default async function CurriculumDetailPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Completion celebration banner */}
+      {isCompleted && (
+        <div className="container mx-auto px-4 pt-6">
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-5 flex items-start gap-3">
+            <span className="text-2xl leading-none">🎉</span>
+            <div>
+              <p className="font-semibold">커리큘럼을 수료했습니다!</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                모든 아티클을 완료했어요. 학습노트를 다시 읽어보며 배운 내용을 정리해보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2-Column Layout */}
       <div className="container mx-auto px-4 py-6 mb-20 md:mb-0">

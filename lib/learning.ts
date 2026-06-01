@@ -42,6 +42,7 @@ export interface EnrollmentStats {
 export interface LearningEnrollment {
   id: string;
   curriculum_id: string;
+  completed_at: string | null;
   curriculum: LearningCurriculum;
   learning_notes: LearningNote[];
   stats: EnrollmentStats;

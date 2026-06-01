@@ -55,6 +55,16 @@ export default async function MyLearningPage() {
     (enrollment) => hydrateEnrollment(enrollment as RawLearningEnrollment)
   );
 
+  // An enrollment counts as completed only when it has items and all are done.
+  const isEnrollmentCompleted = (enrollment: LearningEnrollment) =>
+    enrollment.stats.totalItems > 0 &&
+    enrollment.stats.completedItems >= enrollment.stats.totalItems;
+
+  const inProgressEnrollments = processedEnrollments.filter(
+    (enrollment) => !isEnrollmentCompleted(enrollment)
+  );
+  const completedEnrollments = processedEnrollments.filter(isEnrollmentCompleted);
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl mb-20 md:mb-0">
       <div className="mb-8">
@@ -65,10 +75,44 @@ export default async function MyLearningPage() {
       </div>
 
       {processedEnrollments.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {processedEnrollments.map((enrollment) => (
-            <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
-          ))}
+        <div className="space-y-12">
+          {/* In-progress curriculums */}
+          <section>
+            <h2 className="text-xl font-semibold mb-5 flex items-center gap-2">
+              학습 중
+              <span className="text-sm font-normal text-muted-foreground">
+                {inProgressEnrollments.length}
+              </span>
+            </h2>
+            {inProgressEnrollments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {inProgressEnrollments.map((enrollment) => (
+                  <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                진행 중인 커리큘럼이 없습니다. 새로운 커리큘럼을 시작해보세요!
+              </p>
+            )}
+          </section>
+
+          {/* Completed curriculums */}
+          {completedEnrollments.length > 0 && (
+            <section>
+              <h2 className="text-xl font-semibold mb-5 flex items-center gap-2">
+                수료 완료
+                <span className="text-sm font-normal text-muted-foreground">
+                  {completedEnrollments.length}
+                </span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedEnrollments.map((enrollment) => (
+                  <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       ) : (
         <div className="text-center py-12">

@@ -44,12 +44,67 @@ export async function toggleCompletionAction(
       }
     }
 
+    // Sync enrollment completion status: mark as completed when every
+    // curriculum item is done, otherwise clear the completion timestamp.
+    const justCompleted = await syncEnrollmentCompletion(supabase, enrollmentId);
+
     revalidatePath("/my-learning");
-    return { success: true };
+    return { success: true, justCompleted };
   } catch (error) {
     console.error("Error toggling completion:", error);
     return { success: false, error: "Unknown error" };
   }
+}
+
+// Recalculates whether all curriculum items are completed and updates
+// enrollments.completed_at accordingly. Returns true when the enrollment
+// transitions from in-progress to completed (for celebration UX).
+async function syncEnrollmentCompletion(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  enrollmentId: string
+): Promise<boolean> {
+  const { data: enrollment } = await supabase
+    .from("enrollments")
+    .select("curriculum_id, completed_at")
+    .eq("id", enrollmentId)
+    .single();
+
+  if (!enrollment?.curriculum_id) {
+    return false;
+  }
+
+  const [{ count: totalItems }, { count: completedCount }] = await Promise.all([
+    supabase
+      .from("curriculum_items")
+      .select("id", { count: "exact", head: true })
+      .eq("curriculum_id", enrollment.curriculum_id),
+    supabase
+      .from("completed_items")
+      .select("id", { count: "exact", head: true })
+      .eq("enrollment_id", enrollmentId),
+  ]);
+
+  const total = totalItems ?? 0;
+  const completed = completedCount ?? 0;
+  const isAllCompleted = total > 0 && completed >= total;
+  const wasCompleted = Boolean(enrollment.completed_at);
+
+  if (isAllCompleted && !wasCompleted) {
+    await supabase
+      .from("enrollments")
+      .update({ completed_at: new Date().toISOString() })
+      .eq("id", enrollmentId);
+    return true;
+  }
+
+  if (!isAllCompleted && wasCompleted) {
+    await supabase
+      .from("enrollments")
+      .update({ completed_at: null })
+      .eq("id", enrollmentId);
+  }
+
+  return false;
 }
 
 export async function saveNoteAction(
