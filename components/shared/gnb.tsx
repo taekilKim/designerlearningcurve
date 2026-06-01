@@ -84,7 +84,7 @@ export function GNB() {
               href="/curriculums"
               className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                 pathname?.startsWith("/curriculums")
-                  ? "text-foreground"
+                  ? "text-primary font-semibold"
                   : "text-muted-foreground"
               }`}
             >
@@ -95,7 +95,7 @@ export function GNB() {
                 href="/my-learning"
                 className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/my-learning")
-                    ? "text-foreground"
+                    ? "text-primary font-semibold"
                     : "text-muted-foreground"
                 }`}
               >
@@ -107,7 +107,7 @@ export function GNB() {
                 href="/admin"
                 className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                   pathname?.startsWith("/admin")
-                    ? "text-foreground"
+                    ? "text-primary font-semibold"
                     : "text-muted-foreground"
                 }`}
               >
