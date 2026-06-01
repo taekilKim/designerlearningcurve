@@ -11,6 +11,11 @@ const MAX_PER_SOURCE_FIRST_PASS = 1;
 const MAX_PER_SOURCE_SECOND_PASS = 2;
 const BRUNCH_PROFILE_SOURCE_LIMIT = 30;
 
+// 자동 노출(게시) 기준 — 운영자 수동 승인 없이 서비스에 바로 노출
+const MIN_RELEVANCE_SCORE = 6; // 수집 후보 최소 점수
+const AUTO_PUBLISH_SCORE = 9; // 이 점수 이상 + 품질 조건 충족 시 자동 노출
+const MAX_ARTICLE_AGE_DAYS = 1460; // 약 4년 — 너무 오래된 글은 수집 제외
+
 const NOTIFY_EMAIL = "taekil.design@gmail.com";
 
 interface RssSource {
@@ -92,6 +97,45 @@ function normalizeTitleKey(title: string): string {
     .replace(/\s+/g, " ")
     .replace(/[^\p{L}\p{N}\s]/gu, "")
     .trim();
+}
+
+// HTML 태그 제거 + 엔티티 디코드 + 공백 정리 + 길이 제한
+function cleanHtmlText(raw: string | undefined | null, maxLength = 300): string {
+  if (!raw) return "";
+  const text = cheerio
+    .load(`<div>${raw}</div>`)("div")
+    .text()
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength).trim()}…` : text;
+}
+
+// 상대 경로 썸네일을 절대 URL로 해석
+function resolveUrl(maybeUrl: string | undefined | null, baseUrl: string): string | null {
+  if (!maybeUrl) return null;
+  const trimmed = maybeUrl.trim();
+  if (!trimmed) return null;
+  try {
+    return new URL(trimmed, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+// 본문 HTML에서 첫 번째 이미지 추출 (썸네일 폴백)
+function extractFirstImageFromHtml(html: string | undefined | null, baseUrl: string): string | null {
+  if (!html) return null;
+  const $ = cheerio.load(`<div>${html}</div>`);
+  const src = $("img").first().attr("src");
+  return resolveUrl(src, baseUrl);
+}
+
+// 너무 오래된 글인지 판단
+function isTooOld(publishedAt: string): boolean {
+  const time = Date.parse(publishedAt);
+  if (Number.isNaN(time)) return false;
+  const ageDays = (Date.now() - time) / (1000 * 60 * 60 * 24);
+  return ageDays > MAX_ARTICLE_AGE_DAYS;
 }
 
 // 키워드 기반 카테고리 자동 분류
@@ -242,26 +286,54 @@ function scoreRelevance(article: ArticleData): number {
   return score;
 }
 
+// 자동 노출 여부 결정 — 품질 점수와 콘텐츠 완성도를 함께 본다.
+// 충분히 좋은 글은 운영자 개입 없이 바로 서비스에 노출(is_published=true),
+// 애매한 글은 비공개(pending)로 두어 어드민이 검토할 수 있게 한다.
+function decideExposure(article: ArticleData, score: number): boolean {
+  if (score < AUTO_PUBLISH_SCORE) return false;
+  // 그리드 노출 품질을 위해 썸네일 + 최소한의 설명 + 적절한 제목 필요
+  const hasThumbnail = Boolean(article.thumbnail_url);
+  const hasDescription = (article.description?.trim().length ?? 0) >= 20;
+  const hasReasonableTitle = article.title.trim().length >= 8;
+  return hasThumbnail && hasDescription && hasReasonableTitle;
+}
+
 function parseRSS(xml: string, defaultCategory: string, sourceKey: string): ArticleData[] {
   const $ = cheerio.load(xml, { xmlMode: true });
   const articles: ArticleData[] = [];
 
   // RSS 2.0 <item> 파싱
   $("item").each((_, el) => {
-    const title = $(el).find("title").text().trim();
+    const title = cleanHtmlText($(el).find("title").first().text(), 200);
     const link = $(el).find("link").text().trim() || $(el).find("guid").text().trim();
-    const description = $(el).find("description").text().trim().replace(/<[^>]*>/g, "").slice(0, 200);
-    const author = $(el).find("dc\\:creator").text().trim() || $(el).find("author").text().trim() || null;
+
+    // 본문(content:encoded)을 우선 활용해 더 풍부한 설명 추출, 없으면 description
+    const contentEncoded = $(el).find("content\\:encoded").text().trim();
+    const rawSummary = $(el).find("description").text().trim();
+    const description = cleanHtmlText(contentEncoded || rawSummary, 300);
+
+    const author =
+      $(el).find("dc\\:creator").first().text().trim() ||
+      $(el).find("author").first().text().trim() ||
+      null;
     const pubDate = $(el).find("pubDate").text().trim();
-    const thumbnail =
+
+    // 썸네일: 표준 미디어 태그 → 중첩 media:group → 본문 첫 이미지 순으로 폴백
+    const thumbnailRaw =
       $(el).find("media\\:thumbnail").attr("url") ||
       $(el).find("media\\:content").attr("url") ||
-      $(el).find("enclosure").attr("url") || null;
+      $(el).find("media\\:group media\\:content").first().attr("url") ||
+      $(el).find("enclosure[type^='image']").attr("url") ||
+      $(el).find("enclosure").attr("url") ||
+      null;
+    const thumbnail =
+      resolveUrl(thumbnailRaw, link) ||
+      extractFirstImageFromHtml(contentEncoded || rawSummary, link);
 
     if (title && link) {
       const category = classifyCategory(title, description, defaultCategory);
       articles.push({
-        title, description: description || "", url: link,
+        title, description, url: link,
         source_key: sourceKey,
         thumbnail_url: thumbnail, author,
         published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
@@ -273,18 +345,27 @@ function parseRSS(xml: string, defaultCategory: string, sourceKey: string): Arti
   // Atom <entry> 파싱 (네이버 D2 등)
   if (articles.length === 0) {
     $("entry").each((_, el) => {
-      const title = $(el).find("title").text().trim();
-      const link = $(el).find("link").attr("href") || "";
-      const summary = $(el).find("summary, content").text().trim().replace(/<[^>]*>/g, "").slice(0, 200);
+      const title = cleanHtmlText($(el).find("title").first().text(), 200);
+      const link =
+        $(el).find("link[rel='alternate']").attr("href") ||
+        $(el).find("link").attr("href") ||
+        "";
+      const rawSummary =
+        $(el).find("content").first().text().trim() ||
+        $(el).find("summary").first().text().trim();
+      const summary = cleanHtmlText(rawSummary, 300);
       const author = $(el).find("author name").text().trim() || null;
-      const updated = $(el).find("updated, published").text().trim();
+      const updated = $(el).find("published, updated").first().text().trim();
+      const thumbnail =
+        resolveUrl($(el).find("media\\:thumbnail").attr("url"), link) ||
+        extractFirstImageFromHtml(rawSummary, link);
 
       if (title && link) {
         const category = classifyCategory(title, summary, defaultCategory);
         articles.push({
-          title, description: summary || "", url: link,
+          title, description: summary, url: link,
           source_key: sourceKey,
-          thumbnail_url: null, author,
+          thumbnail_url: thumbnail, author,
           published_at: updated ? new Date(updated).toISOString() : new Date().toISOString(),
           category,
         });
@@ -304,14 +385,32 @@ async function extractOGMetadata(url: string): Promise<Partial<ArticleData>> {
     if (!res.ok) return {};
     const html = await res.text();
     const $ = cheerio.load(html);
-    return {
-      thumbnail_url:
-        $('meta[property="og:image"]').attr("content") ||
-        $('meta[name="twitter:image"]').attr("content") || null,
-      author:
-        $('meta[name="author"]').attr("content") ||
-        $('meta[property="article:author"]').attr("content") || null,
+
+    const ogImage =
+      $('meta[property="og:image"]').attr("content") ||
+      $('meta[name="twitter:image"]').attr("content");
+    const ogDescription =
+      $('meta[property="og:description"]').attr("content") ||
+      $('meta[name="description"]').attr("content") ||
+      $('meta[name="twitter:description"]').attr("content");
+    const ogAuthor =
+      $('meta[name="author"]').attr("content") ||
+      $('meta[property="article:author"]').attr("content");
+    const ogPublished =
+      $('meta[property="article:published_time"]').attr("content") ||
+      $('meta[property="og:article:published_time"]').attr("content");
+
+    const result: Partial<ArticleData> = {
+      thumbnail_url: resolveUrl(ogImage, url),
+      author: ogAuthor?.trim() || null,
     };
+    const cleanedDescription = cleanHtmlText(ogDescription, 300);
+    if (cleanedDescription) result.description = cleanedDescription;
+    if (ogPublished) {
+      const time = Date.parse(ogPublished);
+      if (!Number.isNaN(time)) result.published_at = new Date(time).toISOString();
+    }
+    return result;
   } catch { return {}; }
 }
 
@@ -461,29 +560,37 @@ async function fetchFromRSS(sources: RssSource[]): Promise<ArticleData[]> {
   return allArticles;
 }
 
-async function sendNotification(articles: ArticleData[]) {
+async function sendNotification(
+  articles: (ArticleData & { is_published: boolean })[],
+  autoPublishedCount: number
+) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
   const resend = new Resend(apiKey);
   const now = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  const pendingCount = articles.length - autoPublishedCount;
 
-  const rows = articles.map((a) =>
-    `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">
-      <a href="${a.url}" style="color:#2563eb;text-decoration:none;font-weight:600;">${a.title}</a>
+  const rows = articles.map((a) => {
+    const badge = a.is_published
+      ? `<span style="background:#e8f3ff;color:#3182f6;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">자동 노출</span>`
+      : `<span style="background:#f2f4f6;color:#8b95a1;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;">검토 대기</span>`;
+    return `<tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">
+      ${badge}
+      <a href="${a.url}" style="color:#191f28;text-decoration:none;font-weight:600;margin-left:6px;">${a.title}</a>
       <br><span style="color:#888;font-size:13px;">${a.author || "알 수 없음"} · ${a.category}</span>
-    </td></tr>`
-  ).join("");
+    </td></tr>`;
+  }).join("");
 
   await resend.emails.send({
     from: "DLC Bot <onboarding@resend.dev>",
     to: NOTIFY_EMAIL,
-    subject: `[DLC] ${articles.length}개 새 아티클 추가됨 (${now})`,
+    subject: `[DLC] 아티클 ${articles.length}개 수집 · ${autoPublishedCount}개 자동 노출 (${now})`,
     html: `<div style="font-family:'Pretendard',sans-serif;max-width:600px;margin:0 auto;">
-      <h2 style="color:#111;">새로 추가된 UX/UI 아티클</h2>
-      <p style="color:#666;">${now} 기준 ${articles.length}개 아티클이 자동 수집되었습니다.</p>
+      <h2 style="color:#191f28;">새로 수집된 UX/UI 아티클</h2>
+      <p style="color:#666;">${now} 기준 <b>${articles.length}개</b> 수집 — <b style="color:#3182f6;">${autoPublishedCount}개 자동 노출</b>, ${pendingCount}개 검토 대기.</p>
       <table style="width:100%;border-collapse:collapse;margin-top:16px;">${rows}</table>
-      <p style="color:#aaa;font-size:12px;margin-top:24px;">Designer Learning Curve 자동 수집 시스템</p>
+      <p style="color:#aaa;font-size:12px;margin-top:24px;">Designer Learning Curve 자동 수집 시스템 · 검토 대기 글은 <a href="https://designerlearningcurve.vercel.app/admin/articles" style="color:#3182f6;">어드민</a>에서 노출 처리</p>
     </div>`,
   });
 }
@@ -535,9 +642,10 @@ export async function GET(request: Request) {
     }
     candidates = [...uniqueByKey.values()];
 
-    // 3. 관련성 스코어링 (실무형 중심으로 기준 상향)
-    const MIN_RELEVANCE_SCORE = 6;
-    candidates = candidates.filter((a) => scoreRelevance(a) >= MIN_RELEVANCE_SCORE);
+    // 3. 관련성 스코어링 + 최신성 필터 (오래된/저관련 글 제외)
+    candidates = candidates.filter(
+      (a) => scoreRelevance(a) >= MIN_RELEVANCE_SCORE && !isTooOld(a.published_at)
+    );
 
     // 4. 기존 데이터 기준 중복 제거 (URL + 소스별 제목 키)
     const { data: existing } = await supabase.from("articles").select("url,title");
@@ -606,41 +714,71 @@ export async function GET(request: Request) {
     // Pass 2: 부족 시 보강 (소스당 최대 2개)
     pickByRoundRobin(MAX_PER_SOURCE_SECOND_PASS);
 
-    // 6. OG 메타데이터 보강
+    // 6. OG 메타데이터 보강 — 썸네일 또는 설명이 빈약한 경우 원문에서 보강
     const enriched = await Promise.all(
       toInsert.map(async (article) => {
-        if (!article.thumbnail_url) {
+        const needsThumbnail = !article.thumbnail_url;
+        const needsDescription = (article.description?.trim().length ?? 0) < 20;
+        if (needsThumbnail || needsDescription) {
           const og = await extractOGMetadata(article.url);
-          return { ...article, ...og, url: article.url };
+          return {
+            ...article,
+            // 기존 값이 있으면 유지, 없을 때만 OG 값으로 보강
+            thumbnail_url: article.thumbnail_url || og.thumbnail_url || null,
+            description:
+              (article.description?.trim().length ?? 0) >= 20
+                ? article.description
+                : og.description || article.description,
+            author: article.author || og.author || null,
+            published_at: article.published_at || og.published_at || article.published_at,
+            url: article.url,
+          };
         }
         return article;
       })
     );
 
-    // 7. DB 삽입
+    // 7. DB 삽입 — 품질 기준 충족 시 자동 노출, 아니면 검토 대기(비공개)
     let insertedCount = 0;
-    const insertedArticles: ArticleData[] = [];
+    let autoPublishedCount = 0;
+    const insertedArticles: (ArticleData & { is_published: boolean })[] = [];
     for (const article of enriched) {
+      const isPublished = decideExposure(article, scoreRelevance(article));
       const { error } = await supabase.from("articles").insert({
         title: article.title, description: article.description || null,
         url: article.url, thumbnail_url: article.thumbnail_url || null,
         author: article.author || null, published_at: article.published_at,
         category: article.category || null,
-        is_published: false,
+        is_published: isPublished,
       });
-      if (!error) { insertedCount++; insertedArticles.push(article); }
-      else console.log(`[Cron] Failed: "${article.title}":`, error.message);
+      if (!error) {
+        insertedCount++;
+        if (isPublished) autoPublishedCount++;
+        insertedArticles.push({ ...article, is_published: isPublished });
+      } else {
+        console.log(`[Cron] Failed: "${article.title}":`, error.message);
+      }
     }
 
     // 8. 이메일 발송
-    if (insertedArticles.length > 0) await sendNotification(insertedArticles);
+    if (insertedArticles.length > 0) {
+      await sendNotification(insertedArticles, autoPublishedCount);
+    }
 
     return NextResponse.json({
-      success: true, inserted: insertedCount,
+      success: true,
+      inserted: insertedCount,
+      auto_published: autoPublishedCount,
+      pending_review: insertedCount - autoPublishedCount,
       candidates: candidates.length,
       sources_used: sources.length,
       brunch_profile_sources: brunchProfileSources.length,
-      articles: insertedArticles.map((a) => ({ title: a.title, url: a.url, category: a.category })),
+      articles: insertedArticles.map((a) => ({
+        title: a.title,
+        url: a.url,
+        category: a.category,
+        status: a.is_published ? "published" : "pending",
+      })),
     });
   } catch (error) {
     console.error("[Cron] Error:", error);
