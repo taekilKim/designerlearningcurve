@@ -30,6 +30,7 @@ export interface LearningCurriculum {
   title: string;
   description: string | null;
   thumbnail_url?: string | null;
+  creator_id?: string | null;
   curriculum_items: LearningCurriculumItem[];
 }
 

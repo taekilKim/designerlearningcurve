@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { EnrollmentCard } from "@/components/learning/enrollment-card";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import {
   hydrateEnrollment,
   type LearningEnrollment,
@@ -67,11 +68,20 @@ export default async function MyLearningPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl mb-20 md:mb-0">
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-3">내 학습</h1>
-        <p className="text-base md:text-lg text-muted-foreground">
-          등록한 커리큘럼의 학습 진행 상황을 확인하고 학습노트를 작성해보세요
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">내 학습</h1>
+          <p className="text-base md:text-lg text-muted-foreground">
+            등록한 커리큘럼의 학습 진행 상황을 확인하고 학습노트를 작성해보세요
+          </p>
+        </div>
+        <Link
+          href="/my-learning/create"
+          className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6 flex-shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+          나만의 커리큘럼 만들기
+        </Link>
       </div>
 
       {processedEnrollments.length > 0 ? (

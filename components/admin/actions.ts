@@ -552,7 +552,8 @@ export async function deleteCurriculumItemAction(
 export async function loadMoreArticlesAction(
   page: number,
   pageSize: number = 12,
-  category?: string
+  category?: string,
+  search?: string
 ) {
   const supabase = await createClient();
   const offset = page * pageSize;
@@ -569,6 +570,12 @@ export async function loadMoreArticlesAction(
     query = query.eq("category", category);
   }
 
+  const term = search?.trim();
+  if (term) {
+    const escaped = term.replace(/[%_,]/g, (match) => `\\${match}`);
+    query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+  }
+
   const { data: articles, error } = await query;
 
   if (error) {
@@ -576,8 +583,10 @@ export async function loadMoreArticlesAction(
     return { success: false, error: error.message, articles: [] };
   }
 
-  const mixedArticles = buildMixedArticleFeed(articles || []);
-  const paginated = mixedArticles.slice(offset, offset + pageSize);
+  // For search, keep recency ordering so results are predictable;
+  // otherwise use the mixed feed for varied discovery.
+  const ordered = term ? (articles ?? []) : buildMixedArticleFeed(articles || []);
+  const paginated = ordered.slice(offset, offset + pageSize);
 
   return { success: true, articles: paginated };
 }

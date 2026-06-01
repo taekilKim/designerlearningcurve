@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CategorySidebar } from "@/components/shared/category-sidebar";
 import { ArticleListInfinite } from "@/components/home/article-list-infinite";
+import { ArticleSearch } from "@/components/home/article-search";
 import { buildMixedArticleFeed } from "@/lib/article-feed";
 
 export const dynamic = 'force-dynamic';
@@ -21,10 +22,11 @@ const MAX_FEED_CANDIDATES = 500;
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { category?: string };
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const supabase = await createClient();
-  const { category } = await searchParams;
+  const { category, q } = await searchParams;
+  const searchTerm = q?.trim() || undefined;
 
   // Build article query
   let articlesQuery = supabase
@@ -36,6 +38,13 @@ export default async function Home({
 
   if (category) {
     articlesQuery = articlesQuery.eq("category", category);
+  }
+
+  if (searchTerm) {
+    const escaped = searchTerm.replace(/[%_,]/g, (match) => `\\${match}`);
+    articlesQuery = articlesQuery.or(
+      `title.ilike.%${escaped}%,description.ilike.%${escaped}%`
+    );
   }
 
   // Fetch articles and categories in parallel
@@ -62,7 +71,10 @@ export default async function Home({
     url: "https://designpath.vercel.app",
     description: "UX/UI 디자이너를 위한 엄선된 국내 디자인 아티클을 카테고리별로 탐색해보세요.",
   };
-  const initialArticles = buildMixedArticleFeed(articles || []).slice(0, PAGE_SIZE);
+  // Search results keep recency order; default feed is mixed for discovery
+  const initialArticles = searchTerm
+    ? (articles ?? []).slice(0, PAGE_SIZE)
+    : buildMixedArticleFeed(articles || []).slice(0, PAGE_SIZE);
 
   return (
     <div className="w-full">
@@ -79,15 +91,17 @@ export default async function Home({
           <div className="flex-1 min-w-0">
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">아티클 큐레이션</h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-5">
                 디자이너를 위한 엄선된 아티클을 탐색해보세요
               </p>
+              <ArticleSearch />
             </div>
 
             {/* Infinite Scroll Article List */}
             <ArticleListInfinite
               initialArticles={initialArticles}
               category={category}
+              search={searchTerm}
             />
           </div>
         </div>

@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS curriculums (
   description TEXT,
   difficulty TEXT CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
   estimated_hours INTEGER,
+  -- creator_id NULL => official/operator curriculum; set => user-created
+  creator_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'public')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -165,15 +168,67 @@ CREATE POLICY "Articles are viewable by everyone"
   ON articles FOR SELECT
   USING (true);
 
--- Curriculums policies (public read)
-CREATE POLICY "Curriculums are viewable by everyone"
+-- Curriculums policies: official curriculums and public user curriculums are
+-- visible to everyone; private user curriculums only to their creator.
+CREATE POLICY "Curriculums are viewable when official, public, or owned"
   ON curriculums FOR SELECT
-  USING (true);
+  USING (
+    creator_id IS NULL
+    OR visibility = 'public'
+    OR creator_id = auth.uid()
+  );
 
--- Curriculum Items policies (public read)
-CREATE POLICY "Curriculum items are viewable by everyone"
+-- Curriculum Items follow their curriculum's visibility
+CREATE POLICY "Curriculum items follow curriculum visibility"
   ON curriculum_items FOR SELECT
-  USING (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM curriculums c
+      WHERE c.id = curriculum_items.curriculum_id
+        AND (c.creator_id IS NULL OR c.visibility = 'public' OR c.creator_id = auth.uid())
+    )
+  );
+
+-- Users can manage their own curriculums
+CREATE POLICY "Users can create own curriculums"
+  ON curriculums FOR INSERT
+  WITH CHECK (creator_id = auth.uid());
+
+CREATE POLICY "Users can update own curriculums"
+  ON curriculums FOR UPDATE
+  USING (creator_id = auth.uid());
+
+CREATE POLICY "Users can delete own curriculums"
+  ON curriculums FOR DELETE
+  USING (creator_id = auth.uid());
+
+-- Users can manage items inside curriculums they own
+CREATE POLICY "Users can insert items in own curriculums"
+  ON curriculum_items FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM curriculums c
+      WHERE c.id = curriculum_items.curriculum_id AND c.creator_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update items in own curriculums"
+  ON curriculum_items FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM curriculums c
+      WHERE c.id = curriculum_items.curriculum_id AND c.creator_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete items in own curriculums"
+  ON curriculum_items FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM curriculums c
+      WHERE c.id = curriculum_items.curriculum_id AND c.creator_id = auth.uid()
+    )
+  );
 
 -- Enrollments policies
 CREATE POLICY "Enrollments are viewable by owner"

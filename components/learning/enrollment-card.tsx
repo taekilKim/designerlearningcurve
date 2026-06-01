@@ -28,6 +28,7 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
   const isCompleted =
     enrollment.stats.totalItems > 0 &&
     enrollment.stats.completedItems >= enrollment.stats.totalItems;
+  const isOwnCurriculum = Boolean(enrollment.curriculum.creator_id);
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -65,6 +66,11 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
           <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
             <SealCheck size={14} weight="fill" />
             수료 완료
+          </div>
+        )}
+        {isOwnCurriculum && (
+          <div className="absolute top-3 right-3 z-10 inline-flex items-center rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">
+            내 커리큘럼
           </div>
         )}
         {enrollment.curriculum.thumbnail_url ? (

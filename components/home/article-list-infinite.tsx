@@ -19,6 +19,7 @@ interface Article {
 interface ArticleListInfiniteProps {
   initialArticles: Article[];
   category?: string;
+  search?: string;
 }
 
 const PAGE_SIZE = 12;
@@ -26,6 +27,7 @@ const PAGE_SIZE = 12;
 export function ArticleListInfinite({
   initialArticles,
   category,
+  search,
 }: ArticleListInfiniteProps) {
   const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [page, setPage] = useState(1);
@@ -34,16 +36,16 @@ export function ArticleListInfinite({
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Reset when category changes
+    // Reset when category or search changes
     setArticles(initialArticles);
     setPage(1);
     setHasMore(initialArticles.length === PAGE_SIZE);
-  }, [category, initialArticles]);
+  }, [category, search, initialArticles]);
 
   const loadMore = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await loadMoreArticlesAction(page, PAGE_SIZE, category);
+      const result = await loadMoreArticlesAction(page, PAGE_SIZE, category, search);
 
       if (result.success && result.articles) {
         if (result.articles.length === 0) {
@@ -60,7 +62,7 @@ export function ArticleListInfinite({
     } finally {
       setIsLoading(false);
     }
-  }, [category, page]);
+  }, [category, search, page]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -113,9 +115,11 @@ export function ArticleListInfinite({
       {articles.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
-            {category
-              ? "이 카테고리에 아티클이 없습니다."
-              : "아직 등록된 아티클이 없습니다."}
+            {search
+              ? `'${search}' 검색 결과가 없습니다.`
+              : category
+                ? "이 카테고리에 아티클이 없습니다."
+                : "아직 등록된 아티클이 없습니다."}
           </p>
         </div>
       )}
